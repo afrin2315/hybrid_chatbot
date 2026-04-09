@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In • Mental Health Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .bg-aurora {
+            background:
+                radial-gradient(1000px circle at 10% 10%, rgba(59, 130, 246, 0.30), transparent 55%),
+                radial-gradient(900px circle at 90% 20%, rgba(16, 185, 129, 0.22), transparent 55%),
+                radial-gradient(900px circle at 40% 90%, rgba(168, 85, 247, 0.18), transparent 55%),
+                linear-gradient(135deg, #0b1220 0%, #0f172a 40%, #0b1220 100%);
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(14px);
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-aurora text-white flex items-center justify-center p-6">
+    <div class="w-full max-w-4xl grid md:grid-cols-2 gap-8 items-stretch">
+        <div class="hidden md:flex flex-col justify-between p-8 rounded-3xl glass">
+            <div>
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/10 text-sm">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                    Private, supportive chat
+                </div>
+                <h1 class="mt-6 text-4xl font-bold leading-tight">Mental Health Assistant</h1>
+                <p class="mt-4 text-white/80">
+                    A calm space to talk things through. Sign in to save your session and continue anytime.
+                </p>
+            </div>
+            <div class="text-white/70 text-sm">
+                If you’re in immediate danger, contact your local emergency number.
+            </div>
+        </div>
+
+        <div class="p-8 rounded-3xl glass">
+            <h2 class="text-2xl font-bold">Welcome back</h2>
+            <p class="mt-2 text-white/75 text-sm">Sign in or create an account to start chatting.</p>
+
+            <div class="mt-6 flex gap-2">
+                <button id="tab-login" class="flex-1 px-4 py-2 rounded-xl font-semibold bg-white text-slate-900">Sign In</button>
+                <button id="tab-signup" class="flex-1 px-4 py-2 rounded-xl font-semibold bg-white/10 border border-white/10 text-white hover:bg-white/15">Create Account</button>
+            </div>
+
+            <div id="error" class="hidden mt-4 text-sm text-red-200 bg-red-500/20 border border-red-500/30 p-3 rounded-xl"></div>
+
+            <div class="mt-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-white/90">Email</label>
+                    <input id="email" type="email" autocomplete="email"
+                        class="mt-2 w-full px-4 py-3 rounded-xl bg-white/10 border border-white/10 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-blue-400/60"
+                        placeholder="you@example.com">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-white/90">Password</label>
+                    <input id="password" type="password" autocomplete="current-password"
+                        class="mt-2 w-full px-4 py-3 rounded-xl bg-white/10 border border-white/10 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-blue-400/60"
+                        placeholder="At least 6 characters">
+                    <p id="hint" class="mt-2 text-xs text-white/60 hidden">Tip: use at least 6 characters.</p>
+                </div>
+
+                <button id="submit"
+                    class="w-full mt-2 bg-blue-500 hover:bg-blue-600 transition px-4 py-3 rounded-xl font-semibold text-white disabled:opacity-60 disabled:cursor-not-allowed">
+                    Sign In
+                </button>
+            </div>
+
+            <div class="mt-6 text-xs text-white/60">
+                By continuing, you agree to use this app for non-emergency support only.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const tabLogin = document.getElementById("tab-login");
+        const tabSignup = document.getElementById("tab-signup");
+        const errorEl = document.getElementById("error");
+        const emailEl = document.getElementById("email");
+        const passwordEl = document.getElementById("password");
+        const submitEl = document.getElementById("submit");
+        const hintEl = document.getElementById("hint");
+
+        let mode = "login"; // or "signup"
+
+        function setMode(nextMode) {
+            mode = nextMode;
+            errorEl.classList.add("hidden");
+            hintEl.classList.toggle("hidden", mode !== "signup");
+            submitEl.textContent = mode === "signup" ? "Create Account" : "Sign In";
+            tabLogin.className = mode === "login"
+                ? "flex-1 px-4 py-2 rounded-xl font-semibold bg-white text-slate-900"
+                : "flex-1 px-4 py-2 rounded-xl font-semibold bg-white/10 border border-white/10 text-white hover:bg-white/15";
+            tabSignup.className = mode === "signup"
+                ? "flex-1 px-4 py-2 rounded-xl font-semibold bg-white text-slate-900"
+                : "flex-1 px-4 py-2 rounded-xl font-semibold bg-white/10 border border-white/10 text-white hover:bg-white/15";
+        }
+
+        async function postJson(path, body) {
+            const res = await fetch(path, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "same-origin",
+                body: JSON.stringify(body || {}),
+            });
+            const data = await res.json().catch(() => ({}));
+            return { res, data };
+        }
+
+        function setError(msg) {
+            errorEl.textContent = msg || "Something went wrong";
+            errorEl.classList.remove("hidden");
+        }
+
+        async function submit() {
+            errorEl.classList.add("hidden");
+            submitEl.disabled = true;
+
+            const email = (emailEl.value || "").trim();
+            const password = passwordEl.value || "";
+            const path = mode === "signup" ? "/api/signup" : "/api/login";
+
+            const { res, data } = await postJson(path, { email, password });
+            submitEl.disabled = false;
+
+            if (!res.ok) return setError(data.error || "Request failed");
+            window.location.href = "/app";
+        }
+
+        tabLogin.addEventListener("click", () => setMode("login"));
+        tabSignup.addEventListener("click", () => setMode("signup"));
+        submitEl.addEventListener("click", submit);
+        passwordEl.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                submit();
+            }
+        });
+
+        setMode("login");
+    </script>
+</body>
+</html>

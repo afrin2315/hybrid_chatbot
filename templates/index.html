@@ -8,7 +8,11 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f7fafc;
+            background:
+                radial-gradient(900px circle at 10% 10%, rgba(59, 130, 246, 0.12), transparent 55%),
+                radial-gradient(900px circle at 90% 20%, rgba(16, 185, 129, 0.10), transparent 55%),
+                radial-gradient(900px circle at 40% 90%, rgba(168, 85, 247, 0.08), transparent 55%),
+                linear-gradient(135deg, #f8fafc 0%, #f1f5f9 45%, #f8fafc 100%);
             transition: background-color 0.3s, background-image 0.3s;
             background-size: cover;
             background-position: center;
@@ -30,16 +34,21 @@
 
         /* Style for user messages (right side) */
         .user-message {
-            background-color: #3b82f6;
+            background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
             color: white;
             border-radius: 1.25rem 1.25rem 0.25rem 1.25rem;
+            box-shadow: 0 12px 30px rgba(37, 99, 235, 0.18);
+            word-break: break-word;
         }
 
         /* Style for bot messages (left side) */
         .bot-message {
-            background-color: #e2e8f0;
-            color: #1a202c;
+            background-color: rgba(255, 255, 255, 0.9);
+            color: #0f172a;
             border-radius: 1.25rem 1.25rem 1.25rem 0.25rem;
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+            word-break: break-word;
         }
 
         /* === TYPING INDICATOR CSS === */
@@ -142,7 +151,7 @@
 </head>
 <body class="bg-gray-50 text-gray-800 flex items-center justify-center min-h-screen p-4">
 
-    <div class="flex flex-col md:flex-row w-full max-w-7xl h-[90vh] bg-white rounded-2xl shadow-xl overflow-hidden">
+    <div class="flex flex-col md:flex-row w-full max-w-7xl h-[90vh] bg-white/90 backdrop-blur rounded-2xl shadow-xl overflow-hidden border border-slate-200/70">
 
         <div id="insights-sidebar" class="w-full md:w-1/4 p-6 bg-gray-100 flex flex-col items-center border-b md:border-b-0 md:border-r border-gray-200">
             <h2 class="text-xl font-bold mb-4 text-center text-gray-800">Mental Health Insights</h2>
@@ -176,19 +185,33 @@
         </div>
 
         <div class="flex flex-col flex-1">
-            <div class="p-6 border-b border-gray-200 bg-gray-50 flex items-center justify-between rounded-tr-2xl">
-                <h1 class="text-2xl font-bold text-gray-900">Mental Health Assistant</h1>
-                <button id="settings-btn" class="text-gray-600 hover:text-blue-600 transition duration-300">
-                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M11.49 3.17c-.38-.057-.77-.09-.77-.09a5 5 0 00-4.04 4.04c-.057.38-.09.77-.09.77a5 5 0 004.04 4.04c.38.057.77.09.77.09a5 5 0 004.04-4.04c.057-.38.09-.77.09-.77a5 5 0 00-4.04-4.04zm-.56 4.9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" clip-rule="evenodd"></path><path d="M12.45 2.02l-.54-1.08a.5.5 0 00-.91 0l-.54 1.08a.5.5 0 01-.45.33l-1.16.2a.5.5 0 00-.27.81l.66.7a.5.5 0 01.16.51l-.23 1.15a.5.5 0 00.74.52l1.04-.2a.5.5 0 01.52.16l.7.66a.5.5 0 00.81-.27l.2-1.16a.5.5 0 01.33-.45l1.08-.54a.5.5 0 000-.91l-1.08-.54a.5.5 0 01-.33-.45l-.2-1.16a.5.5 0 00-.81-.27l-.66.7a.5.5 0 01-.51.16l-1.15-.23a.5.5 0 00-.52.74z"></path></svg>
-                </button>
+            <div class="px-6 py-4 border-b border-gray-200 bg-white/70 flex items-center justify-between rounded-tr-2xl">
+                <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Mental Health Assistant</h1>
+                <div class="flex items-center gap-3">
+                    <span id="user-email" class="hidden text-xs text-slate-600 bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-full"></span>
+                    <button id="new-chat-btn" class="px-3 py-2 text-sm font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition duration-300">
+                        New chat
+                    </button>
+                    <button id="logout-btn" class="hidden px-3 py-2 text-sm font-semibold text-white bg-slate-800 rounded-lg hover:bg-slate-900 transition duration-300">
+                        Logout
+                    </button>
+                    <button id="settings-btn" class="text-gray-600 hover:text-blue-600 transition duration-300">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M11.49 3.17c-.38-.057-.77-.09-.77-.09a5 5 0 00-4.04 4.04c-.057.38-.09.77-.09.77a5 5 0 004.04 4.04c.38.057.77.09.77.09a5 5 0 004.04-4.04c.057-.38.09-.77.09-.77a5 5 0 00-4.04-4.04zm-.56 4.9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" clip-rule="evenodd"></path><path d="M12.45 2.02l-.54-1.08a.5.5 0 00-.91 0l-.54 1.08a.5.5 0 01-.45.33l-1.16.2a.5.5 0 00-.27.81l.66.7a.5.5 0 01.16.51l-.23 1.15a.5.5 0 00.74.52l1.04-.2a.5.5 0 01.52.16l.7.66a.5.5 0 00.81-.27l.2-1.16a.5.5 0 01.33-.45l1.08-.54a.5.5 0 000-.91l-1.08-.54a.5.5 0 01-.33-.45l-.2-1.16a.5.5 0 00-.81-.27l-.66.7a.5.5 0 01-.51.16l-1.15-.23a.5.5 0 00-.52.74z"></path></svg>
+                    </button>
+                </div>
             </div>
 
-            <div id="chat-messages" class="flex-1 p-6 overflow-y-auto chat-container space-y-4 bg-gray-50">
+            <div id="chat-messages" class="flex-1 p-6 overflow-y-auto chat-container space-y-4 bg-gradient-to-b from-white/20 to-white/0">
                 <div class="flex justify-start">
                     <div class="bot-message p-4 max-w-md shadow-sm">
                         Hello! I'm here to listen. You can tell me what's on your mind.
                     </div>
                 </div>
+            </div>
+
+            <div id="suggestions" class="hidden px-6 py-3 border-t border-gray-200 bg-white/60">
+                <div class="text-xs font-semibold text-slate-600 mb-2">Suggestions</div>
+                <div id="suggestions-row" class="flex gap-2 overflow-x-auto pb-1"></div>
             </div>
 
             <div class="p-4 border-t border-gray-200 bg-gray-50 flex items-center rounded-br-2xl">
@@ -284,6 +307,11 @@
         const fontSizeSelect = document.getElementById("font-size");
         const fontStyleSelect = document.getElementById("font-style");
         const voiceBtn = document.getElementById("voice-btn");
+        const userEmailEl = document.getElementById("user-email");
+        const logoutBtn = document.getElementById("logout-btn");
+        const newChatBtn = document.getElementById("new-chat-btn");
+        const suggestionsWrap = document.getElementById("suggestions");
+        const suggestionsRow = document.getElementById("suggestions-row");
 
         // UI elements for insights (still included for a complete look)
         const stressFill = document.getElementById("stress-fill");
@@ -293,9 +321,28 @@
         const depressionFill = document.getElementById("depression-fill");
         const depressionText = document.getElementById("depression-text");
 
-        // Generate a unique session ID for the user
-        const sessionId = sessionStorage.getItem('sessionId') || `user-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-        sessionStorage.setItem('sessionId', sessionId);
+        let currentUser = null;
+        let isSending = false;
+
+        function setLoggedInUser(email) {
+            userEmailEl.textContent = email ? email : "";
+            userEmailEl.classList.toggle('hidden', !email);
+            logoutBtn.classList.toggle('hidden', !email);
+        }
+
+        async function refreshAuth() {
+            const res = await fetch("/api/me", { credentials: "same-origin" });
+            const data = await res.json().catch(() => ({}));
+            if (data && data.authenticated && data.user && data.user.email) {
+                setLoggedInUser(data.user.email);
+                currentUser = data.user;
+                loadHistory();
+                return true;
+            }
+            setLoggedInUser(null);
+            window.location.href = "/login";
+            return false;
+        }
 
         // Check for Web Speech API support
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -313,19 +360,108 @@
             console.log("Speech Recognition not supported by this browser.");
         }
 
-        function addMessage(text, sender) {
+        function escapeHtml(s) {
+            return String(s || "")
+                .replaceAll("&", "&amp;")
+                .replaceAll("<", "&lt;")
+                .replaceAll(">", "&gt;")
+                .replaceAll("\"", "&quot;")
+                .replaceAll("'", "&#39;");
+        }
+
+        function formatMessageHtml(text) {
+            return escapeHtml(text).replaceAll("\n", "<br>");
+        }
+
+        function addMessage(text, sender, meta = {}) {
             const msg = document.createElement("div");
             msg.className = `flex ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
-            msg.innerHTML = `
-                <div class="${sender === 'user' ? 'user-message' : 'bot-message'} p-4 max-w-md shadow-sm">
-                    ${text}
-                </div>
-            `;
+            const bubble = document.createElement("div");
+            bubble.className = `${sender === 'user' ? 'user-message' : 'bot-message'} p-4 max-w-md shadow-sm`;
+            if (meta.ts) bubble.dataset.ts = String(meta.ts);
+            bubble.innerHTML = formatMessageHtml(text);
+            msg.appendChild(bubble);
             chatMessages.appendChild(msg);
             chatMessages.scrollTop = chatMessages.scrollHeight;
             if (sender === 'bot' && text) {
-                speakText(text);
+                speakText(String(text));
             }
+        }
+
+        function addBotMessageStreaming(text, meta = {}) {
+            const msg = document.createElement("div");
+            msg.className = "flex justify-start";
+            const bubble = document.createElement("div");
+            bubble.className = "bot-message p-4 max-w-md shadow-sm";
+            if (meta.ts) bubble.dataset.ts = String(meta.ts);
+            bubble.innerHTML = "";
+            msg.appendChild(bubble);
+            chatMessages.appendChild(msg);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            const safe = String(text || "");
+            let i = 0;
+            const step = 3;
+            const timer = setInterval(() => {
+                i = Math.min(safe.length, i + step);
+                bubble.innerHTML = formatMessageHtml(safe.slice(0, i));
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                if (i >= safe.length) {
+                    clearInterval(timer);
+                    if (safe) speakText(safe);
+                }
+            }, 12);
+        }
+
+        function historyKey() {
+            return currentUser?.id ? `chatHistory:${currentUser.id}` : null;
+        }
+
+        function saveHistory() {
+            const key = historyKey();
+            if (!key) return;
+            const items = [];
+            for (const row of chatMessages.querySelectorAll("div.flex")) {
+                const bubble = row.querySelector(".user-message, .bot-message");
+                if (!bubble) continue;
+                const sender = row.className.includes("justify-end") ? "user" : "bot";
+                const ts = bubble.dataset.ts ? Number(bubble.dataset.ts) : Date.now() / 1000;
+                items.push({ sender, text: bubble.innerText || "", ts });
+            }
+            localStorage.setItem(key, JSON.stringify(items));
+        }
+
+        function loadHistory() {
+            const key = historyKey();
+            if (!key) return false;
+            const raw = localStorage.getItem(key);
+            if (!raw) return false;
+            let items = null;
+            try { items = JSON.parse(raw); } catch { return false; }
+            if (!Array.isArray(items) || items.length === 0) return false;
+            chatMessages.innerHTML = "";
+            for (const it of items) addMessage(it.text, it.sender === "user" ? "user" : "bot", { ts: it.ts });
+            return true;
+        }
+
+        function setSuggestions(list) {
+            const items = Array.isArray(list) ? list.filter(Boolean).slice(0, 6) : [];
+            suggestionsRow.innerHTML = "";
+            if (items.length === 0) {
+                suggestionsWrap.classList.add("hidden");
+                return;
+            }
+            for (const label of items) {
+                const btn = document.createElement("button");
+                btn.className = "whitespace-nowrap px-3 py-2 text-sm bg-white border border-slate-200 rounded-full hover:bg-slate-50";
+                btn.textContent = label;
+                btn.addEventListener("click", () => {
+                    userInput.value = label;
+                    sendMessage();
+                });
+                suggestionsRow.appendChild(btn);
+            }
+            suggestionsWrap.classList.remove("hidden");
         }
 
         function addTyping() {
@@ -345,6 +481,21 @@
             const typingDiv = document.getElementById("typing");
             if (typingDiv) typingDiv.remove();
         }
+
+        logoutBtn.addEventListener("click", async () => {
+            await fetch("/api/logout", { method: "POST", credentials: "same-origin" });
+            window.location.href = "/login";
+        });
+
+        newChatBtn.addEventListener("click", async () => {
+            suggestionsWrap.classList.add("hidden");
+            suggestionsRow.innerHTML = "";
+            chatMessages.innerHTML = "";
+            addMessage("Hello! I'm here to listen. You can tell me what's on your mind.", "bot", { ts: Date.now() / 1000 });
+            const key = historyKey();
+            if (key) localStorage.removeItem(key);
+            await fetch("/api/reset", { method: "POST", credentials: "same-origin" }).catch(() => {});
+        });
         
         // Voice to Text functionality
         if (recognition) {
@@ -395,56 +546,82 @@
 
             insight.fill.style.width = `${percentage}%`;
             insight.text.textContent = `${insight.level} (${percentage}%)`;
+
+            const headerTag = document.querySelector('#insights-sidebar p');
+            if (headerTag) {
+                const conf = Number.isFinite(Number(confidence)) ? ` - ${(Number(confidence) * 100).toFixed(0)}%` : '';
+                headerTag.textContent = `Current state: ${emotion_label}${conf}`;
+            }
         }
         
         // Function to handle sending a message to the backend
         async function sendMessage() {
             const text = userInput.value.trim();
             if (text === "") return;
-            addMessage(text, "user");
+            if (isSending) return;
+            isSending = true;
+            userInput.disabled = true;
+            addMessage(text, "user", { ts: Date.now() / 1000 });
             userInput.value = "";
+            saveHistory();
 
             addTyping();
 
             try {
-                // CRITICAL: Ensure this URL matches your Flask server address
-                const apiUrl = 'http://127.0.0.1:5000/chat';
+                // API endpoint:
+                // - If served by Flask: uses same-origin `/chat`
+                // - If opened as a local file: falls back to `http://127.0.0.1:5000/chat`
+                const qs = new URLSearchParams(window.location.search);
+                const apiOverride = qs.get("api");
+                const apiUrl = apiOverride
+                    ? apiOverride
+                    : (window.location.protocol === "file:"
+                        ? "http://127.0.0.1:5000/chat"
+                        : `${window.location.origin}/chat`);
 
                 const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-Session-ID': sessionId
                     },
+                    credentials: "same-origin",
                     body: JSON.stringify({ message: text })
                 });
 
                 if (!response.ok) {
+                    if (response.status === 401) {
+                        removeTyping();
+                        addMessage("Please sign in to continue.", "bot");
+                        await refreshAuth();
+                        return;
+                    }
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
                 const data = await response.json();
                 const botReply = data.reply;
-                const predictedEmotion = data.emotion;
-                const confidenceScore = data.confidence;
+                const predictedEmotion = typeof data.emotion === "string" && data.emotion ? data.emotion : "Normal";
+                const confidenceScore = Number.isFinite(Number(data.confidence)) ? Number(data.confidence) : null;
 
                 removeTyping();
-                
-                // Display the Hybrid Result: [Classifier Label (Confidence)] + Gemini Reply
-                const formattedReply = `
-                    <span class="font-semibold text-gray-700">Classifier: ${predictedEmotion} (${(confidenceScore * 100).toFixed(2)}%)</span>
-                    <br>
-                    ${botReply}
-                `;
-                addMessage(formattedReply, "bot");
+
+                // Chat bubble shows only the response; insights sidebar carries classifier output.
+                addBotMessageStreaming(botReply, { ts: data.ts });
+                saveHistory();
                 
                 // Update the sidebar based on the classification result
-                updateInsightsUI(predictedEmotion, confidenceScore); 
+                updateInsightsUI(predictedEmotion, confidenceScore);
+                setSuggestions(data.suggestions);
 
             } catch (error) {
                 console.error('Error sending message:', error);
                 removeTyping();
                 addMessage("Sorry, I'm having trouble connecting right now. Please check the backend server and ensure CORS is enabled.", "bot");
+            }
+            finally {
+                isSending = false;
+                userInput.disabled = false;
+                userInput.focus();
             }
         }
 
@@ -454,6 +631,9 @@
                 sendMessage();
             }
         });
+
+        // Initialize auth state on load
+        refreshAuth();
 
         // Event listeners for settings modal (customization logic)
         settingsBtn.addEventListener('click', () => {
