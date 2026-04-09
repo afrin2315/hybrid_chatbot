@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mental Health Chatbot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7fafc;
+            transition: background-color 0.3s, background-image 0.3s;
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* Custom scrollbar for the chat messages container */
+        .chat-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .chat-container::-webkit-scrollbar-thumb {
+            background-color: #cbd5e0;
+            border-radius: 4px;
+        }
+
+        /* Style for user messages (right side) */
+        .user-message {
+            background-color: #3b82f6;
+            color: white;
+            border-radius: 1.25rem 1.25rem 0.25rem 1.25rem;
+        }
+
+        /* Style for bot messages (left side) */
+        .bot-message {
+            background-color: #e2e8f0;
+            color: #1a202c;
+            border-radius: 1.25rem 1.25rem 1.25rem 0.25rem;
+        }
+
+        /* === TYPING INDICATOR CSS === */
+        .dot-typing {
+            position: relative;
+            width: 10px;
+            height: 10px;
+            border-radius: 5px;
+            background-color: #64748b; /* Slate-500 for the dots */
+            color: #64748b;
+            animation: dot-typing 1.5s infinite ease-in-out;
+        }
+
+        .dot-typing::before,
+        .dot-typing::after {
+            content: '';
+            display: inline-block;
+            position: absolute;
+            top: 0;
+            width: 10px;
+            height: 10px;
+            border-radius: 5px;
+            background-color: #64748b;
+            color: #64748b;
+        }
+
+        .dot-typing::before {
+            left: -15px;
+            animation: dot-typing 1.5s infinite ease-in-out;
+        }
+
+        .dot-typing::after {
+            left: 15px;
+            animation: dot-typing 1.5s infinite ease-in-out;
+            animation-delay: 0.7s;
+        }
+
+        @keyframes dot-typing {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.2);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+        /* ================================================ */
+        
+        .input-box:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+        }
+
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #0d9488;
+            animation: spin 1s ease infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Modal styling */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            padding: 20px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-50 text-gray-800 flex items-center justify-center min-h-screen p-4">
+
+    <div class="flex flex-col md:flex-row w-full max-w-7xl h-[90vh] bg-white rounded-2xl shadow-xl overflow-hidden">
+
+        <div id="insights-sidebar" class="w-full md:w-1/4 p-6 bg-gray-100 flex flex-col items-center border-b md:border-b-0 md:border-r border-gray-200">
+            <h2 class="text-xl font-bold mb-4 text-center text-gray-800">Mental Health Insights</h2>
+            <div id="insight-content" class="text-center w-full">
+                <p class="text-gray-500 text-sm mb-4">Your current insights based on our conversation will appear here.</p>
+                
+                <div class="bg-white p-4 rounded-xl shadow mb-4">
+                    <h3 class="font-semibold text-lg text-blue-600">Stress Level</h3>
+                    <div id="stress-bar" class="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+                        <div id="stress-fill" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%;"></div>
+                    </div>
+                    <span id="stress-text" class="text-sm text-gray-600 mt-1 block">Medium (0%)</span>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl shadow mb-4">
+                    <h3 class="font-semibold text-lg text-green-600">Anxiety Risk</h3>
+                    <div id="anxiety-bar" class="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+                        <div id="anxiety-fill" class="bg-green-600 h-2.5 rounded-full" style="width: 0%;"></div>
+                    </div>
+                    <span id="anxiety-text" class="text-sm text-gray-600 mt-1 block">Low (0%)</span>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl shadow mb-4">
+                    <h3 class="font-semibold text-lg text-red-600">Depression Risk</h3>
+                    <div id="depression-bar" class="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+                        <div id="depression-fill" class="bg-red-600 h-2.5 rounded-full" style="width: 0%;"></div>
+                    </div>
+                    <span id="depression-text" class="text-sm text-gray-600 mt-1 block">Very Low (0%)</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex flex-col flex-1">
+            <div class="p-6 border-b border-gray-200 bg-gray-50 flex items-center justify-between rounded-tr-2xl">
+                <h1 class="text-2xl font-bold text-gray-900">Mental Health Assistant</h1>
+                <button id="settings-btn" class="text-gray-600 hover:text-blue-600 transition duration-300">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M11.49 3.17c-.38-.057-.77-.09-.77-.09a5 5 0 00-4.04 4.04c-.057.38-.09.77-.09.77a5 5 0 004.04 4.04c.38.057.77.09.77.09a5 5 0 004.04-4.04c.057-.38.09-.77.09-.77a5 5 0 00-4.04-4.04zm-.56 4.9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" clip-rule="evenodd"></path><path d="M12.45 2.02l-.54-1.08a.5.5 0 00-.91 0l-.54 1.08a.5.5 0 01-.45.33l-1.16.2a.5.5 0 00-.27.81l.66.7a.5.5 0 01.16.51l-.23 1.15a.5.5 0 00.74.52l1.04-.2a.5.5 0 01.52.16l.7.66a.5.5 0 00.81-.27l.2-1.16a.5.5 0 01.33-.45l1.08-.54a.5.5 0 000-.91l-1.08-.54a.5.5 0 01-.33-.45l-.2-1.16a.5.5 0 00-.81-.27l-.66.7a.5.5 0 01-.51.16l-1.15-.23a.5.5 0 00-.52.74z"></path></svg>
+                </button>
+            </div>
+
+            <div id="chat-messages" class="flex-1 p-6 overflow-y-auto chat-container space-y-4 bg-gray-50">
+                <div class="flex justify-start">
+                    <div class="bot-message p-4 max-w-md shadow-sm">
+                        Hello! I'm here to listen. You can tell me what's on your mind.
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 border-t border-gray-200 bg-gray-50 flex items-center rounded-br-2xl">
+                <button id="voice-btn" class="bg-teal-600 text-white p-3 rounded-full shadow-lg hover:bg-teal-700 transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-opacity-50 mr-4">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a4 4 0 110-8 4 4 0 010 8z"></path></svg>
+                </button>
+                <input type="text" id="userInput" placeholder="Type your message here..." class="flex-1 p-3 rounded-full border border-gray-300 mr-4 input-box text-gray-900">
+                <button id="send-btn" onclick="sendMessage()" class="bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="settings-modal" class="modal fixed inset-0 flex items-center justify-center">
+        <div class="modal-content bg-white p-6 rounded-lg shadow-2xl w-full max-w-md">
+            <h2 class="text-2xl font-bold mb-4 text-center">Customize Your Experience</h2>
+            <div class="mb-4">
+                <label for="bg-color" class="block text-sm font-medium text-gray-700">Background Color</label>
+                <input type="color" id="bg-color" value="#f7fafc" class="mt-1 w-full h-10 border border-gray-300 rounded-md">
+            </div>
+            <div class="mb-4">
+                <label for="chatbox-color" class="block text-sm font-medium text-gray-700">Chat Box Color</label>
+                <input type="color" id="chatbox-color" value="#f7fafc" class="mt-1 w-full h-10 border border-gray-300 rounded-md">
+            </div>
+            <div class="mb-4">
+                <label for="bg-image" class="block text-sm font-medium text-gray-700">Background Image</label>
+                <select id="bg-image" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                    <option value="">None</option>
+                    <option value="https://images.unsplash.com/photo-1518623489625-11e2f75439b1?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D">Nature</option>
+                    <option value="https://images.unsplash.com/photo-1506748686214-e9df14d4d12c?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D">Sunset</option>
+                    <option value="https://images.unsplash.com/photo-1549692520-f1c500e23803?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D">Abstract</option>
+                    <option value="https://images.unsplash.com/photo-1519669556885-ce279ac61bbe?q=80&w=2787&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D">Mountains</option>
+                    <option value="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=2946&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D">Beach</option>
+                    <option value="https://images.unsplash.com/photo-1498804103079-a6351b050096?q=80&w=2787&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D">Coffee</option>
+                    <option value="https://images.unsplash.com/photo-1517404215738-15263e9f9178?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D">Cozy Room</option>
+                    <option value="https://images.unsplash.com/photo-1513519245088-0e12902e5b38?q=80&w=2787&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D">Books</option>
+                    <option value="https://images.unsplash.com/photo-1518066000714-58c45f1a2c0a?q=80&w=2787&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D">Minimal</option>
+                    <option value="https://images.unsplash.com/photo-1499714652252-4d2c88226e69?q=80&w=2787&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D">Sky</option>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label for="font-size" class="block text-sm font-medium text-gray-700">Font Size</label>
+                <select id="font-size" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                    <option value="12px">Small</option>
+                    <option value="14px">Normal</option>
+                    <option value="16px" selected>Large</option>
+                    <option value="18px">Extra Large</option>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label for="font-style" class="block text-sm font-medium text-gray-700">Font Style</label>
+                <select id="font-style" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                    <option value="'Inter', sans-serif" selected>Inter</option>
+                    <option value="'Roboto', sans-serif">Roboto</option>
+                    <option value="'Open Sans', sans-serif">Open Sans</option>
+                    <option value="'Lato', sans-serif">Lato</option>
+                    <option value="'Montserrat', sans-serif">Montserrat</option>
+                    <option value="'Poppins', sans-serif">Poppins</option>
+                    <option value="'Noto Sans', sans-serif">Noto Sans</option>
+                    <option value="'Merriweather', serif">Merriweather</option>
+                    <option value="'Playfair Display', serif">Playfair Display</option>
+                    <option value="'Georgia', serif">Georgia</option>
+                    <option value="'Times New Roman', serif">Times New Roman</option>
+                    <option value="'Garamond', serif">Garamond</option>
+                    <option value="'Courier New', monospace">Courier New</option>
+                    <option value="'Comic Sans MS', cursive">Comic Sans MS</option>
+                    <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+                    <option value="'Verdana', sans-serif">Verdana</option>
+                    <option value="'Arial', sans-serif">Arial</option>
+                    <option value="'Helvetica', sans-serif">Helvetica</option>
+                    <option value="'Tahoma', sans-serif">Tahoma</option>
+                    <option value="'Consolas', monospace">Consolas</option>
+                    <option value="'Lucida Console', monospace">Lucida Console</option>
+                </select>
+            </div>
+            <div class="mt-6 flex justify-end space-x-3">
+                <button id="close-modal-btn" class="px-4 py-2 text-sm font-medium rounded-md text-gray-700 bg-gray-200 hover:bg-gray-300">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const chatMessages = document.getElementById("chat-messages");
+        const userInput = document.getElementById("userInput");
+        const sendBtn = document.getElementById("send-btn");
+        const settingsBtn = document.getElementById("settings-btn");
+        const settingsModal = document.getElementById("settings-modal");
+        const closeModalBtn = document.getElementById("close-modal-btn");
+        const bgColorInput = document.getElementById("bg-color");
+        const chatboxColorInput = document.getElementById("chatbox-color");
+        const bgImageSelect = document.getElementById("bg-image");
+        const fontSizeSelect = document.getElementById("font-size");
+        const fontStyleSelect = document.getElementById("font-style");
+        const voiceBtn = document.getElementById("voice-btn");
+
+        // UI elements for insights (still included for a complete look)
+        const stressFill = document.getElementById("stress-fill");
+        const stressText = document.getElementById("stress-text");
+        const anxietyFill = document.getElementById("anxiety-fill");
+        const anxietyText = document.getElementById("anxiety-text");
+        const depressionFill = document.getElementById("depression-fill");
+        const depressionText = document.getElementById("depression-text");
+
+        // Generate a unique session ID for the user
+        const sessionId = sessionStorage.getItem('sessionId') || `user-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        sessionStorage.setItem('sessionId', sessionId);
+
+        // Check for Web Speech API support
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const SpeechSynthesis = window.SpeechSynthesis;
+        const synth = window.speechSynthesis;
+        let recognition = null;
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'en-US';
+        } else {
+            voiceBtn.disabled = true;
+            voiceBtn.style.backgroundColor = 'gray';
+            console.log("Speech Recognition not supported by this browser.");
+        }
+
+        function addMessage(text, sender) {
+            const msg = document.createElement("div");
+            msg.className = `flex ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
+            msg.innerHTML = `
+                <div class="${sender === 'user' ? 'user-message' : 'bot-message'} p-4 max-w-md shadow-sm">
+                    ${text}
+                </div>
+            `;
+            chatMessages.appendChild(msg);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            if (sender === 'bot' && text) {
+                speakText(text);
+            }
+        }
+
+        function addTyping() {
+            const typingDiv = document.createElement("div");
+            typingDiv.className = "typing flex justify-start";
+            typingDiv.setAttribute("id", "typing");
+            typingDiv.innerHTML = `
+                <div class="bg-gray-200 p-4 rounded-xl max-w-md shadow-sm">
+                    <div class="dot-typing"></div>
+                </div>
+            `;
+            chatMessages.appendChild(typingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function removeTyping() {
+            const typingDiv = document.getElementById("typing");
+            if (typingDiv) typingDiv.remove();
+        }
+        
+        // Voice to Text functionality
+        if (recognition) {
+            voiceBtn.addEventListener('click', () => {
+                recognition.start();
+                voiceBtn.innerHTML = '<svg class="w-6 h-6 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a4 4 0 110-8 4 4 0 010 8z"></path></svg>';
+            });
+
+            recognition.addEventListener('result', (event) => {
+                const transcript = event.results[0][0].transcript;
+                userInput.value = transcript;
+                sendMessage();
+            });
+
+            recognition.addEventListener('end', () => {
+                voiceBtn.innerHTML = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a4 4 0 110-8 4 4 0 010 8z"></path></svg>';
+            });
+        }
+        
+        // Text to Speech functionality
+        function speakText(text) {
+            if (synth) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                synth.speak(utterance);
+            }
+        }
+
+        // Function to update the insights sidebar (using heuristic mapping based on classification)
+        function updateInsightsUI(emotion_label, confidence) {
+            const riskMapping = {
+                'Crisis': { fill: depressionFill, text: depressionText, value: 0.95, level: 'High' },
+                'Depression/Sadness': { fill: depressionFill, text: depressionText, value: 0.70, level: 'Medium' },
+                'Stress/Anxiety': { fill: stressFill, text: stressText, value: 0.80, level: 'High' },
+                'Normal': { fill: anxietyFill, text: anxietyText, value: 0.15, level: 'Very Low' },
+                'Model_Error': { fill: stressFill, text: stressText, value: 0.05, level: 'Low' }
+            };
+
+            // Reset all bars visually
+            stressFill.style.width = '0%';
+            anxietyFill.style.width = '0%';
+            depressionFill.style.width = '0%';
+            stressText.textContent = 'Medium (0%)';
+            anxietyText.textContent = 'Low (0%)';
+            depressionText.textContent = 'Very Low (0%)';
+
+            const insight = riskMapping[emotion_label] || riskMapping['Normal'];
+            const percentage = Math.round(insight.value * 100);
+
+            insight.fill.style.width = `${percentage}%`;
+            insight.text.textContent = `${insight.level} (${percentage}%)`;
+        }
+        
+        // Function to handle sending a message to the backend
+        async function sendMessage() {
+            const text = userInput.value.trim();
+            if (text === "") return;
+            addMessage(text, "user");
+            userInput.value = "";
+
+            addTyping();
+
+            try {
+                // CRITICAL: Ensure this URL matches your Flask server address
+                const apiUrl = 'http://127.0.0.1:5000/chat';
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Session-ID': sessionId
+                    },
+                    body: JSON.stringify({ message: text })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                const botReply = data.reply;
+                const predictedEmotion = data.emotion;
+                const confidenceScore = data.confidence;
+
+                removeTyping();
+                
+                // Display the Hybrid Result: [Classifier Label (Confidence)] + Gemini Reply
+                const formattedReply = `
+                    <span class="font-semibold text-gray-700">Classifier: ${predictedEmotion} (${(confidenceScore * 100).toFixed(2)}%)</span>
+                    <br>
+                    ${botReply}
+                `;
+                addMessage(formattedReply, "bot");
+                
+                // Update the sidebar based on the classification result
+                updateInsightsUI(predictedEmotion, confidenceScore); 
+
+            } catch (error) {
+                console.error('Error sending message:', error);
+                removeTyping();
+                addMessage("Sorry, I'm having trouble connecting right now. Please check the backend server and ensure CORS is enabled.", "bot");
+            }
+        }
+
+        userInput.addEventListener("keypress", function(e) {
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Event listeners for settings modal (customization logic)
+        settingsBtn.addEventListener('click', () => {
+            settingsModal.style.display = 'flex';
+        });
+
+        closeModalBtn.addEventListener('click', () => {
+            settingsModal.style.display = 'none';
+        });
+
+        // Customization logic 
+        bgColorInput.addEventListener('input', (e) => {
+            document.body.style.backgroundColor = e.target.value;
+            document.body.style.backgroundImage = 'none';
+        });
+
+        chatboxColorInput.addEventListener('input', (e) => {
+            chatMessages.style.backgroundColor = e.target.value;
+        });
+        
+        bgImageSelect.addEventListener('change', (e) => {
+            if (e.target.value) {
+                document.body.style.backgroundImage = `url('${e.target.value}')`;
+                document.body.style.backgroundColor = 'transparent';
+            } else {
+                document.body.style.backgroundImage = 'none';
+                document.body.style.backgroundColor = bgColorInput.value;
+            }
+        });
+
+        fontSizeSelect.addEventListener('change', (e) => {
+            document.body.style.fontSize = e.target.value;
+        });
+
+        fontStyleSelect.addEventListener('change', (e) => {
+            document.body.style.fontFamily = e.target.value;
+        });
+    </script>
+</body>
+</html>
