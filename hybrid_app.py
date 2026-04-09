@@ -1,4 +1,4 @@
-
+﻿
 # --- hybrid_app.py (CORE BACKEND LOGIC) ---
 import os
 import random
@@ -97,9 +97,15 @@ def _suggestions_for_tag(tag: str):
     t = (tag or "").strip()
     if t in ("Crisis", "CRISIS_ALERT"):
         return [
-            "I’m not safe right now",
-            "I’m safe, but I need help",
+            "I'm not safe right now",
+            "I'm safe, but I need help",
             "Can you help me find support?",
+        ]
+    if t == "Physical Health":
+        return [
+            "What should I do now?",
+            "When should I see a doctor?",
+            "How can I rest better?",
         ]
     if t == "Stress/Anxiety":
         return [
@@ -110,12 +116,12 @@ def _suggestions_for_tag(tag: str):
     if t == "Depression/Sadness":
         return [
             "I feel empty",
-            "I can’t get motivated",
-            "What’s one small step I can take?",
+            "I can't get motivated",
+            "What's one small step I can take?",
         ]
     if t == "Anger/Frustration":
         return [
-            "I’m really frustrated",
+            "I'm really frustrated",
             "Help me respond calmly",
             "How do I handle this better?",
         ]
@@ -195,6 +201,8 @@ else:
 
 def _heuristic_emotion(text: str):
     t = (text or "").lower()
+    if any(k in t for k in ["fever", "temperature", "high temp", "cough", "sore throat", "headache", "body ache", "flu", "cold"]):
+        return "Physical Health", 0.75
     if any(k in t for k in ["end it all", "suicide", "kill myself", "want to die"]):
         return "Crisis", 0.95
     if any(k in t for k in ["panicking", "panic", "overwhelmed", "anxious", "anxiety", "stress"]):
@@ -271,9 +279,9 @@ def get_gemini_response(user_message, emotional_tag, history):
                 return ""
             if len(msg) <= 12:
                 return pick([
-                    "I’m here with you.",
+                    "I'm here with you.",
                     "Thanks for reaching out.",
-                    "I’m listening.",
+                    "I'm listening.",
                 ]) + " "
             return pick([
                 "Thanks for sharing that. ",
@@ -284,9 +292,9 @@ def get_gemini_response(user_message, emotional_tag, history):
         # Crisis: always prioritize safety
         if tag in ("Crisis", "CRISIS_ALERT"):
             return (
-                "I’m really sorry you’re feeling this way. You don’t have to go through this alone. "
-                "If you’re in immediate danger or feel like you might hurt yourself, please call your local emergency number now. "
-                "If you’re in the U.S., you can call or text 988. "
+                "I'm really sorry you're feeling this way. You don't have to go through this alone. "
+                "If you're in immediate danger or feel like you might hurt yourself, please call your local emergency number now. "
+                "If you're in the U.S., you can call or text 988. "
                 "Are you safe right now, and is there someone nearby you can reach out to?"
             )
 
@@ -297,15 +305,15 @@ def get_gemini_response(user_message, emotional_tag, history):
                 "It can help to unclench your jaw/shoulders and take one slow breath.",
             ])
             question = pick([
-                "What’s the main thing making this feel intense right now?",
-                "What’s the biggest worry looping in your mind?",
+                "What's the main thing making this feel intense right now?",
+                "What's the biggest worry looping in your mind?",
                 "When did you start noticing it get heavier today?",
             ])
             candidate = f"{reflect_text()}{coping} {question}"
             if last_model and candidate.strip() == last_model.strip():
                 follow_up = pick([
                     "What feels like the hardest part of it right now?",
-                    "If we zoom in, what’s the very next thing you have to face?",
+                    "If we zoom in, what's the very next thing you have to face?",
                     "What would help you feel just a little safer or calmer in this moment?",
                 ])
                 candidate = f"{reflect_text()}{pick([coping])} {follow_up}"
@@ -313,28 +321,28 @@ def get_gemini_response(user_message, emotional_tag, history):
 
         if tag == "Depression/Sadness":
             support = pick([
-                "Feeling low can be exhausting, and it makes sense that it’s hard.",
+                "Feeling low can be exhausting, and it makes sense that it's hard.",
                 "That kind of heaviness can really wear you down.",
-                "It’s understandable to feel drained when things have been tough.",
+                "It's understandable to feel drained when things have been tough.",
             ])
             step = pick([
                 "If it helps, we can pick one small, doable step for today (water, a short walk, or texting someone you trust).",
-                "We can keep this gentle—what’s one tiny thing that would make the next hour 1% easier?",
+                "We can keep this gentle-what's one tiny thing that would make the next hour 1% easier?",
                 "Would it help to focus on one small next step you can manage right now?",
             ])
             question = pick([
-                "What’s been the toughest part lately?",
-                "What’s been weighing on you the most?",
-                "When does it tend to feel worst—morning, afternoon, or night?",
+                "What's been the toughest part lately?",
+                "What's been weighing on you the most?",
+                "When does it tend to feel worst-morning, afternoon, or night?",
             ])
             candidate = f"{reflect_text()}{support} {step} {question}"
             if last_model and candidate.strip() == last_model.strip():
-                candidate = f"{reflect_text()}{support} What’s one small thing that usually brings you a tiny bit of relief?"
+                candidate = f"{reflect_text()}{support} What's one small thing that usually brings you a tiny bit of relief?"
             return candidate
 
         if tag == "Anger/Frustration":
             frame = pick([
-                "That sounds frustrating, and it’s understandable to feel that way.",
+                "That sounds frustrating, and it's understandable to feel that way.",
                 "I can see why that would make you angry.",
                 "That would bother a lot of people.",
             ])
@@ -345,33 +353,64 @@ def get_gemini_response(user_message, emotional_tag, history):
             ])
             candidate = f"{reflect_text()}{frame} {question}"
             if last_model and candidate.strip() == last_model.strip():
-                candidate = f"{reflect_text()}{frame} What do you need most right now—space, understanding, or a plan?"
+                candidate = f"{reflect_text()}{frame} What do you need most right now-space, understanding, or a plan?"
             return candidate
 
         # Normal / Unknown: be conversational and move toward specifics
+        if tag == "Physical Health":
+            return (
+                f"{reflect_text()}I'm not a doctor, but I can help you think through next steps. "
+                "With fever, rest and fluids often help. If you have severe symptoms (trouble breathing, chest pain, confusion, "
+                "fainting, severe dehydration), or your fever is very high or not improving after a couple of days, it's safest to get medical advice. "
+                "How high is your temperature (if you checked), and do you have any other symptoms?"
+            )
+
+        if msg_l in ("help me make a plan", "make a plan", "plan") or "make a plan" in msg_l:
+            return (
+                f"{reflect_text()}Okay - let's make a simple plan.\n"
+                "1) What's the goal?\n"
+                "2) What's one small step you can do in the next 10 minutes?\n"
+                "3) What might get in the way, and what's a backup?\n"
+                "What are we planning for?"
+            )
+
+        if msg_l in ("ask me a question", "ask me questions", "question") or "ask me a question" in msg_l:
+            return pick([
+                "What's been taking up most of your mental space lately?",
+                "If today could go a little better, what would change first?",
+                "When do you feel most like yourself?",
+                "What's one thing you wish others understood about what you're dealing with?",
+            ])
+
+        if msg_l in ("i want to vent", "i wanna vent", "let me vent", "vent"):
+            return (
+                f"{reflect_text()}Go ahead - I'm listening.\n"
+                "What's been building up that you haven't gotten to say out loud?"
+            )
+
         if msg_l in ("hi", "hii", "hello", "hey", "hai", "hola") or msg_l.startswith(("hi ", "hello ", "hey ")):
             return pick([
-                "Hi—glad you’re here. How are you feeling today?",
-                "Hey. I’m here to listen. What’s on your mind right now?",
+                "Hi - glad you're here. How are you feeling today?",
+                "Hey. I'm here to listen. What's on your mind right now?",
                 "Hello. What would you like to talk about today?",
             ])
 
         if "how are you" in msg_l or "how r u" in msg_l:
             return pick([
-                "Thanks for asking. I’m here with you—how are *you* feeling right now?",
-                "I’m here and listening. How are you doing today, really?",
-                "I’m doing okay, and I’m here for you. What’s been on your mind lately?",
+                "Thanks for asking. I'm here with you-how are *you* feeling right now?",
+                "I'm here and listening. How are you doing today, really?",
+                "I'm doing okay, and I'm here for you. What's been on your mind lately?",
             ])
 
         opener = pick([
-            "I’m here to listen.",
-            "I’m glad you’re here.",
-            "I’m here with you.",
+            "I'm here to listen.",
+            "I'm glad you're here.",
+            "I'm here with you.",
         ])
         question = pick([
-            "What’s on your mind right now?",
-            "Do you want to talk about what’s been going on today?",
-            "What would feel most helpful right now—talking it through, a next step, or just venting?",
+            "What's on your mind right now?",
+            "Do you want to talk about what's been going on today?",
+            "What would feel most helpful right now-talking it through, a next step, or just venting?",
         ])
         candidate = f"{reflect_text()}{opener} {question}".strip()
         if last_model and candidate.strip() == last_model.strip():
@@ -641,4 +680,5 @@ if __name__ == '__main__':
 
     print(f" * Frontend: http://{host}:{port}/")
     app.run(host=host, port=port, debug=False)
+
 
