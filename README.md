@@ -19,6 +19,16 @@ A deployable AI-powered mental health support chatbot built with a hybrid NLP pi
 - Space page: https://huggingface.co/spaces/Afrin18/hybrid-mental-health-chatbot
 - Source code: https://github.com/afrin2315/hybrid_chatbot
 
+## Screenshots
+
+### Login and account access
+
+![Login screen](assets/image1.png)
+
+### Chat interface and customization panel
+
+![Chat interface](assets/image.png)
+
 ## Overview
 
 This project was designed as more than a simple chatbot UI. It demonstrates how multiple AI components can be combined into a single safety-aware support application:
@@ -83,6 +93,7 @@ If a `GEMINI_API_KEY` is available, the app can use Gemini for grounded supporti
 - `templates/login.html` - signup and login interface
 - `templates/index.html` - chatbot interface
 - `saved_models/` - saved model artifacts used by the hybrid pipeline
+- `assets/` - screenshots used in the project README
 - `requirements.txt` - pinned dependency versions
 - `Dockerfile` - Hugging Face Spaces deployment container
 - `app.db` - SQLite database for user accounts
