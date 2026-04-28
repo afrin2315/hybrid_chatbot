@@ -6,7 +6,7 @@ colorTo: green
 sdk: docker
 app_port: 7860
 pinned: false
-short_description: Hybrid AI mental health support chatbot with Flask, DistilBERT, LinearSVC, and Gemini integration.
+short_description: Hybrid AI mental health chatbot demo.
 ---
 
 # Hybrid Mental Health Chatbot
