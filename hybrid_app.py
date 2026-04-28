@@ -35,9 +35,12 @@ app = Flask(__name__)
 CORS(app)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", secrets.token_hex(32))
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+session_cookie_samesite = os.environ.get("SESSION_COOKIE_SAMESITE", "None")
+if str(session_cookie_samesite).lower() == "none":
+    session_cookie_samesite = "None"
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
-    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_SAMESITE=session_cookie_samesite,
     SESSION_COOKIE_SECURE=str(os.environ.get("SESSION_COOKIE_SECURE", "")).lower() in ("1", "true", "yes"),
 )
 

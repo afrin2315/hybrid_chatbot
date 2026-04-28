@@ -82,6 +82,7 @@ Hugging Face officially supports Spaces using `docker`, and Docker Spaces can ho
 4. In the Space settings, add these secrets or variables:
    - `FLASK_SECRET_KEY`
    - `SESSION_COOKIE_SECURE=1`
+   - `SESSION_COOKIE_SAMESITE=None`
    - `GEMINI_API_KEY` if you want live Gemini responses
 5. Let the Space build automatically.
 

@@ -21,4 +21,4 @@ COPY . /app
 
 EXPOSE 7860
 
-CMD ["python", "hybrid_app.py"]
+CMD ["gunicorn", "--bind", "0.0.0.0:7860", "wsgi:app"]
