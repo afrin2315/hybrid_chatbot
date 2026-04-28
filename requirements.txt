@@ -1,8 +1,9 @@
-flask
-flask-cors
-numpy
-requests
-tensorflow
-transformers
-scikit-learn
-pyngrok
+flask==3.0.3
+flask-cors==5.0.0
+gunicorn==23.0.0
+numpy==1.26.4
+pyngrok==7.2.8
+requests==2.32.3
+scikit-learn==1.6.1
+tensorflow==2.15.0
+transformers==4.36.2

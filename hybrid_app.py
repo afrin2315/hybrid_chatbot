@@ -11,6 +11,7 @@ import time
 from flask import Flask, request, jsonify, send_from_directory, redirect
 from flask import session as flask_session
 from flask_cors import CORS
+from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.security import generate_password_hash, check_password_hash
 
 # Optional heavy deps: the app still runs (with heuristic fallbacks) if these aren't available.
@@ -33,12 +34,18 @@ except Exception:
 app = Flask(__name__)
 CORS(app)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", secrets.token_hex(32))
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_SECURE=str(os.environ.get("SESSION_COOKIE_SECURE", "")).lower() in ("1", "true", "yes"),
+)
 
 # --- GLOBAL CONFIGS & PATHS ---
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_DIR = os.path.join(ROOT_DIR, 'saved_models')
 FRONTEND_DIR = os.path.join(ROOT_DIR, 'templates')
-DB_PATH = os.path.join(ROOT_DIR, "app.db")
+DB_PATH = os.environ.get("DB_PATH", os.path.join(ROOT_DIR, "app.db"))
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent"
 
@@ -442,7 +449,11 @@ def get_gemini_response(user_message, emotional_tag, history):
     }
 
     try:
-        response = requests.post(f"{GEMINI_API_URL}?key={GEMINI_API_KEY}", json=payload)
+        response = requests.post(
+            f"{GEMINI_API_URL}?key={GEMINI_API_KEY}",
+            json=payload,
+            timeout=20,
+        )
         response.raise_for_status()
         
         response_json = response.json()
