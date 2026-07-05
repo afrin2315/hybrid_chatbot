@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign In • Mental Health Assistant</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/static/app.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
@@ -31,13 +31,29 @@
                     <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
                     Private, supportive chat
                 </div>
-                <h1 class="mt-6 text-4xl font-bold leading-tight">Mental Health Assistant</h1>
+                <h1 class="mt-6 text-4xl font-bold leading-tight">Mindful</h1>
+                <p class="mt-3 text-white/70 text-sm">Hybrid AI mental-health support</p>
                 <p class="mt-4 text-white/80">
-                    A calm space to talk things through. Sign in to save your session and continue anytime.
+                    A calm space to talk things through — with an AI that shows its work.
                 </p>
+
+                <div class="mt-7 space-y-3">
+                    <div class="flex items-start gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-red-500/20 border border-red-400/30 flex items-center justify-center text-red-300 flex-shrink-0">🛡️</div>
+                        <div><div class="font-semibold text-sm">Safety-first design</div><div class="text-xs text-white/60">A recall-tuned crisis layer runs on every message.</div></div>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-blue-500/20 border border-blue-400/30 flex items-center justify-center text-blue-300 flex-shrink-0">⚡</div>
+                        <div><div class="font-semibold text-sm">Model cascade</div><div class="text-xs text-white/60">A fast classifier handles most cases; DistilBERT takes the hard ones.</div></div>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center text-emerald-300 flex-shrink-0">🔍</div>
+                        <div><div class="font-semibold text-sm">Fully transparent</div><div class="text-xs text-white/60">See the routing, confidence, and class breakdown live.</div></div>
+                    </div>
+                </div>
             </div>
-            <div class="text-white/70 text-sm">
-                If you’re in immediate danger, contact your local emergency number.
+            <div class="text-white/60 text-xs mt-8">
+                If you’re in immediate danger, contact your local emergency number or a crisis line (988 in the U.S.).
             </div>
         </div>
 

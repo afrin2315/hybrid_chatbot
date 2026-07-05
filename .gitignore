@@ -4,3 +4,26 @@ __pycache__/
 .env
 .venv/
 venv/
+
+# Training caches / checkpoints (regenerable; not for version control)
+.hf_cache/
+artifacts/_bert_ckpt/
+.pytest_cache/
+
+# Data splits are regenerable via `python -m ml.data`
+data/*.parquet
+
+# Node (only used to build static/app.css; the built CSS IS committed)
+node_modules/
+package-lock.json
+
+# DistilBERT weights are 257MB (> GitHub's 100MB limit). Regenerable via
+# `python -m ml.train_bert`; the app degrades to the fast + safety tiers
+# gracefully when it's absent. Small SVC + crisis models ARE committed.
+artifacts/distilbert/
+artifacts/_bert_ckpt/
+
+# Stray / nested
+cjb.txt
+hybrid-mental-health-chatbot/
+.hf_cache/

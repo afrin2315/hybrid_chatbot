@@ -1,0 +1,89 @@
+{
+  "dataset": "btwitssayan/sentiment-analysis-for-mental-health",
+  "n_test": 7660,
+  "classes": [
+    "Normal",
+    "Stress",
+    "Anxiety",
+    "Depression",
+    "Bipolar",
+    "Personality disorder",
+    "Suicidal"
+  ],
+  "table1_routine_multiclass": [
+    {
+      "name": "SVC only (fast tier)",
+      "accuracy": 0.7753,
+      "macro_f1": 0.7155,
+      "per_class_f1": {
+        "Normal": 0.9159,
+        "Stress": 0.521,
+        "Anxiety": 0.7989,
+        "Depression": 0.7187,
+        "Bipolar": 0.7853,
+        "Personality disorder": 0.5849,
+        "Suicidal": 0.684
+      },
+      "latency_ms_median": 1.464,
+      "latency_ms_p95": 1.955,
+      "cost": "near-zero"
+    },
+    {
+      "name": "DistilBERT only (accurate tier)",
+      "accuracy": 0.7702,
+      "macro_f1": 0.7305,
+      "per_class_f1": {
+        "Normal": 0.9192,
+        "Stress": 0.6055,
+        "Anxiety": 0.8349,
+        "Depression": 0.6819,
+        "Bipolar": 0.8163,
+        "Personality disorder": 0.5523,
+        "Suicidal": 0.7034
+      },
+      "latency_ms_median": 58.545,
+      "latency_ms_p95": 97.363,
+      "cost": "high"
+    },
+    {
+      "name": "Cascade (SVC->BERT, gated)",
+      "accuracy": 0.7906,
+      "macro_f1": 0.7484,
+      "per_class_f1": {
+        "Normal": 0.9285,
+        "Stress": 0.613,
+        "Anxiety": 0.8434,
+        "Depression": 0.7239,
+        "Bipolar": 0.8311,
+        "Personality disorder": 0.5833,
+        "Suicidal": 0.7155
+      },
+      "latency_ms_median": 3.484,
+      "latency_ms_p95": 75.921,
+      "tier_share": {
+        "fast": 0.576,
+        "accurate": 0.424
+      },
+      "escalated_to_bert_pct": 42.4,
+      "cost": "~42.4% of BERT-only cost"
+    }
+  ],
+  "table2_crisis_safety_layer": {
+    "tuned_recall_first": {
+      "threshold": 0.1835,
+      "recall": 0.9574,
+      "precision": 0.4802,
+      "f1": 0.6396,
+      "flagged_pct": 41.5,
+      "true_crisis_pct": 20.8
+    },
+    "f1_optimal_0.5": {
+      "threshold": 0.5,
+      "recall": 0.7989,
+      "precision": 0.6381,
+      "f1": 0.7095,
+      "flagged_pct": 26.1,
+      "true_crisis_pct": 20.8
+    }
+  }
+}

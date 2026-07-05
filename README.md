@@ -6,207 +6,222 @@ colorTo: green
 sdk: docker
 app_port: 7860
 pinned: false
-short_description: Hybrid AI mental health chatbot demo.
+short_description: Evidence-driven hybrid NLP triage chatbot for mental health.
 ---
 
-# Hybrid Mental Health Chatbot
+# Hybrid Mental-Health Triage Chatbot
 
-A deployable AI-powered mental health support chatbot built with a hybrid NLP pipeline, Flask backend, authentication flow, persistent user accounts, and a live web interface.
+A safety-aware mental-health support chatbot built around a **confidence-gated
+model cascade with an always-on, recall-optimized crisis safety layer**. The
+architecture is not a stylistic choice — it is **chosen by measurement**, and the
+evaluation that justifies it lives in [`REPORT.md`](REPORT.md) and
+[`reports/metrics.json`](reports/metrics.json).
 
-## Live Demo
+> **Why this design, and why not just one model?** Because the two jobs have
+> different objectives. Routine emotion classification should be *cheap and
+> accurate*; crisis detection should *never miss a real crisis*. A single model
+> forces one operating point onto both. The cascade lets each objective be tuned
+> and measured independently — and the numbers show it keeps transformer-level
+> accuracy while paying transformer cost on only a minority of messages.
 
-- App: https://afrin18-hybrid-mental-health-chatbot.hf.space
-- Space page: https://huggingface.co/spaces/Afrin18/hybrid-mental-health-chatbot
-- Source code: https://github.com/afrin2315/hybrid_chatbot
+## The core idea in one picture
 
-## Screenshots
-
-### Login and account access
-
-![Login screen](assets/image1.png)
-
-### Chat interface and customization panel
-
-![Chat interface](assets/image.png)
-
-## Overview
-
-This project was designed as more than a simple chatbot UI. It demonstrates how multiple AI components can be combined into a single safety-aware support application:
-
-- a transformer-based emotion classifier for primary prediction
-- a traditional machine learning classifier for fast secondary safety checks
-- crisis-aware routing logic
-- a conversational response layer with cloud LLM support when available
-- local fallback behavior when hosted environments cannot load all model assets
-- user authentication with session-based access control
-
-The result is a full-stack demo application that can be shown as a working product on a resume, portfolio, GitHub profile, or interview walkthrough.
-
-## Key Features
-
-- User signup and login with hashed passwords
-- Session-based authentication using Flask cookies
-- Protected chat route available only after login
-- Hybrid emotion classification pipeline
-- Crisis-aware detection and high-priority response routing
-- Guided suggestions based on predicted emotional state
-- Persistent account storage using SQLite
-- Live web deployment on Hugging Face Spaces
-- Graceful fallback when external APIs or some heavy model artifacts are unavailable
-
-## How the Hybrid System Works
-
-The backend uses a layered decision flow instead of relying on only one model.
-
-### 1. Primary emotion classification
-
-The application first attempts to classify the user message using a DistilBERT-based text classifier. This acts as the main emotional-tagging component.
-
-### 2. Safety check
-
-A LinearSVC pipeline acts as a lightweight secondary classifier to support fast crisis-risk detection.
-
-### 3. Routing logic
-
-The backend compares outputs and applies safety rules:
-
-- if crisis-related intent is detected with high confidence, the app returns a crisis-priority response
-- otherwise, it uses the main emotional label to guide the response style
-
-### 4. Response generation
-
-If a `GEMINI_API_KEY` is available, the app can use Gemini for grounded supportive responses. If not, it falls back to built-in local response logic so the application still works in demo environments.
-
-## Tech Stack
-
-- Backend: Flask, Flask-CORS
-- Frontend: HTML, Tailwind CSS, vanilla JavaScript
-- ML/NLP: TensorFlow, Transformers, scikit-learn, NumPy
-- Database: SQLite
-- Deployment: Docker, Gunicorn, Hugging Face Spaces
-- Optional API integration: Gemini
-
-## Project Structure
-
-- `hybrid_app.py` - main backend application, routing, auth, model loading, and chatbot logic
-- `wsgi.py` - production WSGI entrypoint
-- `templates/login.html` - signup and login interface
-- `templates/index.html` - chatbot interface
-- `saved_models/` - saved model artifacts used by the hybrid pipeline
-- `assets/` - screenshots used in the project README
-- `requirements.txt` - pinned dependency versions
-- `Dockerfile` - Hugging Face Spaces deployment container
-- `app.db` - SQLite database for user accounts
-
-## Live Deployment Notes
-
-This project is deployed as a Hugging Face Docker Space.
-
-Direct app link:
-
-- https://afrin18-hybrid-mental-health-chatbot.hf.space
-
-Important behavior:
-
-- the app is best tested using the direct `hf.space` link
-- Hugging Face’s wrapper page can sometimes interfere with session behavior in embedded mode
-- the current deployment supports account creation, login, and chat interaction from the direct app URL
-
-## Environment Variables
-
-The application supports these environment variables:
-
-- `FLASK_SECRET_KEY` - required for stable and secure login sessions
-- `SESSION_COOKIE_SECURE` - set to `1` for HTTPS deployments
-- `SESSION_COOKIE_SAMESITE` - set to `None` for Hugging Face Space session compatibility
-- `GEMINI_API_KEY` - optional, enables Gemini-generated responses
-- `DB_PATH` - optional custom database path
-- `HOST` - server host
-- `PORT` - server port
-- `ENABLE_NGROK` - optional for local tunneling
-
-## Local Setup
-
-### 1. Install dependencies
-
-```powershell
-python -m pip install -r requirements.txt
+```
+user message
+     │
+     ▼
+┌─────────────────────────────────────────────────────────────┐
+│ SAFETY LAYER  (always on)                                     │
+│ high-recall crisis detector — tuned for recall, not accuracy  │
+│ score ≥ threshold ──────────────► CRISIS response (override)  │
+└─────────────────────────────────────────────────────────────┘
+     │ (not crisis)
+     ▼
+┌─────────────────────────────────────────────────────────────┐
+│ FAST TIER   calibrated TF-IDF + LinearSVC  (~1 ms, ~free)     │
+│ confidence ≥ gate ──────────────► use this label             │
+└─────────────────────────────────────────────────────────────┘
+     │ (low confidence only)
+     ▼
+┌─────────────────────────────────────────────────────────────┐
+│ ACCURATE TIER  fine-tuned DistilBERT  (only the hard cases)   │
+└─────────────────────────────────────────────────────────────┘
+     │
+     ▼
+RESPONSE LAYER — Gemini (if configured) or local templates,
+                 grounded by the real classifier label
 ```
 
-### 2. Start the app
+**No classification is ever hand-coded or mocked.** Every emotional tag comes
+from a trained model; the response layer only decides *how* to reply.
 
-```powershell
-python hybrid_app.py
+## Design thesis: errors are asymmetric
+
+Missing a crisis (false negative) can be catastrophic; a false crisis alarm just
+shows a supportive message and helpline. So the safety layer is deliberately
+tuned for **high recall** and accepts lower precision — a documented,
+quantified trade-off (see Table 2 in `REPORT.md`). This asymmetry is the reason
+the safety layer is a *separate* component rather than one of the seven classes,
+and it is the central research contribution of the project.
+
+## Dataset
+
+- **Source:** *Sentiment Analysis for Mental Health* (aggregated corpus),
+  ~52.7k labeled statements, mirrored on the Hugging Face Hub as
+  [`btwitssayan/sentiment-analysis-for-mental-health`](https://huggingface.co/datasets/btwitssayan/sentiment-analysis-for-mental-health).
+- **Classes (7):** Normal, Stress, Anxiety, Depression, Bipolar,
+  Personality disorder, Suicidal.
+- **Splits:** stratified 70 / 15 / 15 train / val / test, seeded and
+  reproducible (`ml/data.py`). Class imbalance is real and handled with
+  class-weighted training, not by discarding data.
+
+## Reproduce the results
+
+```bash
+pip install -r requirements-train.txt
+
+# Fast path (SVC + crisis + evaluation) — a couple of minutes on CPU:
+python -m ml.pipeline
+
+# Full path (also fine-tunes DistilBERT) — slower on CPU:
+python -m ml.pipeline --bert
 ```
 
-### 3. Open the local app
+This writes `reports/metrics.json` and `reports/confusion_matrix.png`, and prints
+the two evaluation tables. Individual steps:
 
-- http://127.0.0.1:5000/
+| Step | Command | Output |
+|------|---------|--------|
+| Prepare data | `python -m ml.data` | `data/{train,val,test}.parquet` |
+| Fast tier | `python -m ml.train_svc` | `artifacts/svc_pipeline.joblib` |
+| Safety layer | `python -m ml.crisis` | `artifacts/crisis_detector.joblib` |
+| Accurate tier | `python -m ml.train_bert` | `artifacts/distilbert/` |
+| Evaluate / ablate | `python -m ml.evaluate` | `reports/metrics.json` |
 
-## Hugging Face Spaces Deployment
+## Results
 
-This repository is configured for Hugging Face Docker Spaces.
+See [`REPORT.md`](REPORT.md) for the full write-up. Headline on the held-out test
+set (7,660 examples, 7 classes):
 
-### Required Space settings
+**Table 1 — routine classification (no safety override):**
 
-Add these secrets or variables in the Space settings:
+| Architecture | Accuracy | Macro-F1 | Median latency | % routed to BERT |
+|---|---|---|---|---|
+| SVC only (fast tier) | 0.775 | 0.716 | **1.5 ms** | — |
+| DistilBERT only (accurate tier) | 0.770 | 0.731 | 58.6 ms | — |
+| **Cascade (SVC → BERT, gated)** | **0.791** | **0.748** | 3.5 ms | 42% |
 
-- `FLASK_SECRET_KEY`
-- `SESSION_COOKIE_SECURE=1`
-- `SESSION_COOKIE_SAMESITE=None`
+The gated cascade **beats both standalone models** on accuracy and macro-F1
+while running ~17× faster than DistilBERT-only, because it invokes the
+transformer on only the ~42% of messages the fast model is unsure about. That is
+the evidence-backed answer to *"why not one model?"*
 
-Optional:
+**Table 2 — crisis safety layer (binary, suicidal-vs-rest):**
 
-- `GEMINI_API_KEY`
+| Operating point | Recall | Precision | F1 | % flagged |
+|---|---|---|---|---|
+| Max-safety mode (τ 0.18) | **0.957** | 0.480 | 0.640 | 41.5% |
+| **Balanced — deployed default (τ 0.5)** | 0.799 | 0.638 | 0.710 | 26.1% |
 
-### Deployment files included
+The detector *can* catch **95.7%** of crises at its max-recall point, but it is
+only well-calibrated on training-like (long) text; on short chat it is noisy
+(bare "I am sad" spikes, real distress can sit low). So in deployment the safety
+decision is **a high-precision phrase lexicon OR a very-confident ML score
+(≥ 0.90)** — the lexicon carries recall on explicit/concerning phrasing, and the
+model contributes only when certain. The recall-first ML point stays available
+via `CRISIS_THRESHOLD`. Choosing this deliberately, rather than blindly
+maximizing a noisy score, is the mature call. See REPORT.md §4 for detail.
 
-- `README.md` with Hugging Face Space metadata
-- `Dockerfile`
-- `requirements.txt`
-- application code and templates
+*(Reproduce with `python -m ml.evaluate`; raw numbers in `reports/metrics.json`,
+confusion matrix in `reports/confusion_matrix.png`.)*
 
-## Current Demo Behavior and Limitations
+## Run the app locally
 
-This project is deployed successfully and is suitable for showcasing, but a few model-loading limitations remain in the hosted environment:
+```bash
+pip install -r requirements.txt      # serving deps only
+# (train models first, or point at prebuilt artifacts/)
+python hybrid_app.py                 # http://127.0.0.1:5000/
+```
 
-- some TensorFlow/Keras model artifacts do not deserialize cleanly in the current runtime
-- one tokenizer pickle references a custom object not available during deployment
-- DistilBERT local files are incomplete for full offline model restoration in Spaces
+The app degrades gracefully: if the DistilBERT artifacts are absent it serves on
+the fast + safety tiers alone; if `GEMINI_API_KEY` is unset it uses local
+response templates.
 
-Because of that, the app currently relies partly on built-in fallback logic in the hosted deployment.
+## Transparency (no black box)
 
-That said, this is still useful from a project and resume perspective because it demonstrates:
+Every `/chat` response includes an `explain` block exposing the full basis of the
+decision:
 
-- system design
-- deployment workflow
-- authentication
-- inference routing
-- resilience under incomplete model availability
+```json
+{
+  "reply": "...",
+  "emotion": "Anxiety",
+  "confidence": 0.76,
+  "explain": {
+    "decided_by": "fast",
+    "crisis": false,
+    "crisis_score": 0.03,
+    "class_probabilities": { "Anxiety": 0.76, "Stress": 0.11, "Normal": 0.07 }
+  }
+}
+```
 
-## Why This Project Is Resume-Friendly
+`decided_by` tells you which tier made the call (`safety` / `fast` / `accurate`),
+so the routing itself is inspectable.
 
-This project is stronger than a basic chatbot because it shows both engineering and product thinking:
+## Project structure
 
-- building a hybrid ML + web application instead of a single-script model demo
-- implementing authentication and user flow
-- deploying a live public demo
-- handling real deployment issues like cookie behavior, hosting constraints, and model fallback design
-- presenting an end-to-end AI application rather than only a notebook experiment
+```
+ml/
+  config.py       shared paths, class labels, thresholds
+  data.py         download, clean, stratified split
+  train_svc.py    calibrated TF-IDF + LinearSVC (fast tier)
+  crisis.py       high-recall crisis detector (safety layer)
+  train_bert.py   DistilBERT fine-tune, plain PyTorch loop (accurate tier)
+  cascade.py      inference core: safety override + confidence-gated routing
+  evaluate.py     two-table ablation + confusion matrix + latency
+  pipeline.py     one-command reproduction
+responder.py      response layer (Gemini or local templates)
+hybrid_app.py     Flask app: auth, persistent history, /chat, transparency
+tests/            pytest suite (routing, crisis override, auth, persistence)
+templates/        landing page + login + chat UI
+```
 
-## Suggested Resume Description
+## Tech stack
 
-Built and deployed a hybrid AI mental health chatbot using Flask, DistilBERT, LinearSVC, TensorFlow, SQLite, and Docker, with authentication, crisis-aware routing, emotional state classification, and live hosting on Hugging Face Spaces.
+- **Backend:** Flask, Flask-CORS, Gunicorn
+- **ML/NLP:** scikit-learn (TF-IDF, LinearSVC, calibration, LogisticRegression),
+  PyTorch + Transformers (DistilBERT)
+- **Data/eval:** Hugging Face `datasets`, pandas, matplotlib
+- **DB:** SQLite (users + persistent chat history)
+- **Deploy:** Docker (CPU-only PyTorch), Hugging Face Spaces
+- **Optional:** Gemini for response generation
 
-## Future Improvements
+## Environment variables
 
-- Replace SQLite with PostgreSQL or another hosted database for stronger persistence
-- Re-export model artifacts in a deployment-safe format
-- Add chat history persistence per user
-- Add admin analytics or conversation monitoring dashboards
-- Improve crisis support resources by region
-- Add stronger evaluation metrics and model validation reporting
+| Variable | Purpose |
+|----------|---------|
+| `FLASK_SECRET_KEY` | stable, secure sessions |
+| `SESSION_COOKIE_SECURE` | `1` for HTTPS deployments |
+| `SESSION_COOKIE_SAMESITE` | `None` for Hugging Face Space embedding |
+| `NVIDIA_API_KEY` | optional; enables NVIDIA Nemotron responses (key from build.nvidia.com) |
+| `NVIDIA_MODEL` | Nemotron model slug from the NVIDIA API catalog |
+| `GEMINI_API_KEY` | optional; enables Gemini responses (used if no NVIDIA key) |
+| `DISABLE_ACCURATE_TIER` | `1` to serve on fast + safety tiers only (skip DistilBERT) |
+| `SVC_CONFIDENCE_GATE` | fast→accurate escalation threshold |
+| `CRISIS_THRESHOLD` | safety-layer trigger (lower = more recall) |
+| `DB_PATH`, `HOST`, `PORT` | standard overrides |
+
+## Limitations & honesty
+
+- The dataset is social-media text with noisy, self-reported labels; the model
+  reflects that distribution and is **not** a clinical diagnostic tool.
+- The crisis layer trades precision for recall by design — expect false alarms.
+- This is a research/portfolio system, **not** a substitute for professional
+  mental-health care.
 
 ## Disclaimer
 
-This project is intended for educational, research, and portfolio demonstration purposes. It is not a substitute for licensed mental health care, medical diagnosis, or emergency support.
+For educational and research purposes only. Not a substitute for licensed
+mental-health care, diagnosis, or emergency services. If you are in crisis,
+contact your local emergency number or a crisis line (e.g. 988 in the U.S.).

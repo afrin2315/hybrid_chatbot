@@ -1,0 +1,30 @@
+{
+  "classes": [
+    "Normal",
+    "Stress",
+    "Anxiety",
+    "Depression",
+    "Bipolar",
+    "Personality disorder",
+    "Suicidal"
+  ],
+  "class_to_id": {
+    "Normal": 0,
+    "Stress": 1,
+    "Anxiety": 2,
+    "Depression": 3,
+    "Bipolar": 4,
+    "Personality disorder": 5,
+    "Suicidal": 6
+  },
+  "crisis_class": "Suicidal",
+  "counts": {
+    "Normal": 16038,
+    "Depression": 15086,
+    "Suicidal": 10638,
+    "Anxiety": 3615,
+    "Bipolar": 2501,
+    "Stress": 2289,
+    "Personality disorder": 894
+  }
+}

@@ -3,686 +3,462 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mental Health Chatbot</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Mindful • Hybrid AI Support</title>
+    <link rel="stylesheet" href="/static/app.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --accent: #3b82f6;
+            --bg-0: #070b16;
+            --bg-1: #0b1220;
+        }
+        * { box-sizing: border-box; }
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Inter', system-ui, sans-serif;
+            color: #e5e7eb;
             background:
-                radial-gradient(900px circle at 10% 10%, rgba(59, 130, 246, 0.12), transparent 55%),
-                radial-gradient(900px circle at 90% 20%, rgba(16, 185, 129, 0.10), transparent 55%),
-                radial-gradient(900px circle at 40% 90%, rgba(168, 85, 247, 0.08), transparent 55%),
-                linear-gradient(135deg, #f8fafc 0%, #f1f5f9 45%, #f8fafc 100%);
-            transition: background-color 0.3s, background-image 0.3s;
-            background-size: cover;
-            background-position: center;
+                radial-gradient(1100px circle at 8% 5%, rgba(59,130,246,0.16), transparent 55%),
+                radial-gradient(1000px circle at 95% 15%, rgba(16,185,129,0.12), transparent 55%),
+                radial-gradient(900px circle at 50% 100%, rgba(168,85,247,0.12), transparent 55%),
+                linear-gradient(135deg, var(--bg-0) 0%, var(--bg-1) 45%, var(--bg-0) 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
         }
+        .glass {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.10);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+        .glass-strong { background: rgba(255,255,255,0.08); }
+        .chat-scroll::-webkit-scrollbar { width: 8px; }
+        .chat-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.14); border-radius: 8px; }
+        .chat-scroll::-webkit-scrollbar-track { background: transparent; }
 
-        /* Custom scrollbar for the chat messages container */
-        .chat-container::-webkit-scrollbar {
-            width: 8px;
+        .bubble-user {
+            background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+            color: #fff;
+            border-radius: 18px 18px 6px 18px;
+            box-shadow: 0 10px 30px rgba(37,99,235,0.30);
         }
+        .bubble-bot {
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.10);
+            color: #e8eaf0;
+            border-radius: 18px 18px 18px 6px;
+        }
+        .msg-in { animation: msgIn .35s cubic-bezier(.22,1,.36,1); }
+        @keyframes msgIn { from { opacity:0; transform: translateY(10px) scale(.98);} to {opacity:1; transform:none;} }
 
-        .chat-container::-webkit-scrollbar-track {
-            background: transparent;
-        }
+        /* Cascade pipeline nodes */
+        .node { transition: all .4s cubic-bezier(.22,1,.36,1); opacity:.45; }
+        .node.active { opacity:1; }
+        .node.active .node-dot { box-shadow: 0 0 0 4px rgba(255,255,255,0.06); transform: scale(1.12); }
+        .node .node-line { transition: background .4s; }
 
-        .chat-container::-webkit-scrollbar-thumb {
-            background-color: #cbd5e0;
-            border-radius: 4px;
-        }
+        /* Probability bars */
+        .prob-fill { transition: width .6s cubic-bezier(.22,1,.36,1); }
+        .gauge-fill { transition: width .6s cubic-bezier(.22,1,.36,1); }
 
-        /* Style for user messages (right side) */
-        .user-message {
-            background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
-            color: white;
-            border-radius: 1.25rem 1.25rem 0.25rem 1.25rem;
-            box-shadow: 0 12px 30px rgba(37, 99, 235, 0.18);
-            word-break: break-word;
+        .dot-typing, .dot-typing::before, .dot-typing::after {
+            width: 7px; height: 7px; border-radius: 50%; background: #94a3b8; display:inline-block;
         }
+        .dot-typing { position: relative; animation: dt 1.4s infinite ease-in-out; }
+        .dot-typing::before, .dot-typing::after { content:''; position:absolute; top:0; }
+        .dot-typing::before { left:-12px; animation: dt 1.4s infinite ease-in-out; }
+        .dot-typing::after  { left: 12px; animation: dt 1.4s infinite ease-in-out .5s; }
+        @keyframes dt { 0%,100%{transform:scale(.7);opacity:.5;} 50%{transform:scale(1.1);opacity:1;} }
 
-        /* Style for bot messages (left side) */
-        .bot-message {
-            background-color: rgba(255, 255, 255, 0.9);
-            color: #0f172a;
-            border-radius: 1.25rem 1.25rem 1.25rem 0.25rem;
-            border: 1px solid rgba(148, 163, 184, 0.35);
-            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
-            word-break: break-word;
-        }
-
-        /* === TYPING INDICATOR CSS === */
-        .dot-typing {
-            position: relative;
-            width: 10px;
-            height: 10px;
-            border-radius: 5px;
-            background-color: #64748b; /* Slate-500 for the dots */
-            color: #64748b;
-            animation: dot-typing 1.5s infinite ease-in-out;
-        }
-
-        .dot-typing::before,
-        .dot-typing::after {
-            content: '';
-            display: inline-block;
-            position: absolute;
-            top: 0;
-            width: 10px;
-            height: 10px;
-            border-radius: 5px;
-            background-color: #64748b;
-            color: #64748b;
-        }
-
-        .dot-typing::before {
-            left: -15px;
-            animation: dot-typing 1.5s infinite ease-in-out;
-        }
-
-        .dot-typing::after {
-            left: 15px;
-            animation: dot-typing 1.5s infinite ease-in-out;
-            animation-delay: 0.7s;
-        }
-
-        @keyframes dot-typing {
-            0% {
-                transform: scale(1);
-            }
-            50% {
-                transform: scale(1.2);
-            }
-            100% {
-                transform: scale(1);
-            }
-        }
-        /* ================================================ */
-        
-        .input-box:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
-        }
-
-        .spinner {
-            border: 4px solid rgba(0, 0, 0, 0.1);
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            border-left-color: #0d9488;
-            animation: spin 1s ease infinite;
-        }
-
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-            100% {
-                transform: rotate(360deg);
-            }
-        }
-
-        /* Modal styling */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.4);
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal-content {
-            background-color: #fefefe;
-            padding: 20px;
-            border-radius: 10px;
-            width: 90%;
-            max-width: 500px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
+        .chip { transition: all .2s; }
+        .chip:hover { transform: translateY(-1px); background: rgba(255,255,255,0.12); }
+        .fade-in { animation: fadeIn .4s ease; }
+        @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+        input:focus, textarea:focus { outline: none; }
     </style>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
-<body class="bg-gray-50 text-gray-800 flex items-center justify-center min-h-screen p-4">
+<body class="p-3 md:p-5">
+    <div class="mx-auto w-full max-w-7xl h-[94vh] flex flex-col md:flex-row gap-4">
 
-    <div class="flex flex-col md:flex-row w-full max-w-7xl h-[90vh] bg-white/90 backdrop-blur rounded-2xl shadow-xl overflow-hidden border border-slate-200/70">
+        <!-- ============ LEFT: LIVE AI ANALYSIS ============ -->
+        <aside class="glass rounded-3xl p-5 w-full md:w-[340px] flex-shrink-0 flex flex-col overflow-y-auto chat-scroll">
+            <div class="flex items-center gap-2 mb-1">
+                <span class="relative flex h-2.5 w-2.5">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-400"></span>
+                </span>
+                <h2 class="text-sm font-bold tracking-wide text-white/90">LIVE AI ANALYSIS</h2>
+            </div>
+            <p class="text-xs text-white/45 mb-4">Every reply is explained — no black box.</p>
 
-        <div id="insights-sidebar" class="w-full md:w-1/4 p-6 bg-gray-100 flex flex-col items-center border-b md:border-b-0 md:border-r border-gray-200">
-            <h2 class="text-xl font-bold mb-4 text-center text-gray-800">Mental Health Insights</h2>
-            <div id="insight-content" class="text-center w-full">
-                <p class="text-gray-500 text-sm mb-4">Your current insights based on our conversation will appear here.</p>
-                
-                <div class="bg-white p-4 rounded-xl shadow mb-4">
-                    <h3 class="font-semibold text-lg text-blue-600">Stress Level</h3>
-                    <div id="stress-bar" class="w-full bg-gray-200 rounded-full h-2.5 mt-2">
-                        <div id="stress-fill" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%;"></div>
-                    </div>
-                    <span id="stress-text" class="text-sm text-gray-600 mt-1 block">Medium (0%)</span>
+            <!-- Detected state -->
+            <div class="glass-strong rounded-2xl p-4 mb-4">
+                <div class="text-[11px] uppercase tracking-wider text-white/45 mb-1">Detected state</div>
+                <div class="flex items-baseline justify-between">
+                    <span id="state-label" class="text-2xl font-extrabold text-white">—</span>
+                    <span id="state-conf" class="text-sm font-semibold text-white/60"></span>
                 </div>
-
-                <div class="bg-white p-4 rounded-xl shadow mb-4">
-                    <h3 class="font-semibold text-lg text-green-600">Anxiety Risk</h3>
-                    <div id="anxiety-bar" class="w-full bg-gray-200 rounded-full h-2.5 mt-2">
-                        <div id="anxiety-fill" class="bg-green-600 h-2.5 rounded-full" style="width: 0%;"></div>
-                    </div>
-                    <span id="anxiety-text" class="text-sm text-gray-600 mt-1 block">Low (0%)</span>
-                </div>
-
-                <div class="bg-white p-4 rounded-xl shadow mb-4">
-                    <h3 class="font-semibold text-lg text-red-600">Depression Risk</h3>
-                    <div id="depression-bar" class="w-full bg-gray-200 rounded-full h-2.5 mt-2">
-                        <div id="depression-fill" class="bg-red-600 h-2.5 rounded-full" style="width: 0%;"></div>
-                    </div>
-                    <span id="depression-text" class="text-sm text-gray-600 mt-1 block">Very Low (0%)</span>
+                <div class="w-full h-1.5 rounded-full bg-white/10 mt-3 overflow-hidden">
+                    <div id="conf-fill" class="gauge-fill h-full rounded-full bg-gradient-to-r from-blue-400 to-indigo-400" style="width:0%"></div>
                 </div>
             </div>
-        </div>
 
-        <div class="flex flex-col flex-1">
-            <div class="px-6 py-4 border-b border-gray-200 bg-white/70 flex items-center justify-between rounded-tr-2xl">
-                <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Mental Health Assistant</h1>
+            <!-- Cascade routing -->
+            <div class="glass-strong rounded-2xl p-4 mb-4">
+                <div class="text-[11px] uppercase tracking-wider text-white/45 mb-3">Routing pipeline</div>
+                <div class="space-y-1">
+                    <div id="node-safety" class="node flex items-center gap-3">
+                        <div class="flex flex-col items-center">
+                            <div class="node-dot w-9 h-9 rounded-xl bg-red-500/20 border border-red-400/40 flex items-center justify-center text-red-300">🛡️</div>
+                            <div class="node-line w-0.5 h-4 bg-white/10"></div>
+                        </div>
+                        <div>
+                            <div class="text-sm font-semibold text-white/90">Safety layer</div>
+                            <div class="text-[11px] text-white/45">High-recall crisis check · always on</div>
+                        </div>
+                        <span class="decided ml-auto hidden text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-400/20 text-red-200 border border-red-400/30">DECIDED</span>
+                    </div>
+                    <div id="node-fast" class="node flex items-center gap-3">
+                        <div class="flex flex-col items-center">
+                            <div class="node-dot w-9 h-9 rounded-xl bg-blue-500/20 border border-blue-400/40 flex items-center justify-center text-blue-300">⚡</div>
+                            <div class="node-line w-0.5 h-4 bg-white/10"></div>
+                        </div>
+                        <div>
+                            <div class="text-sm font-semibold text-white/90">Fast tier</div>
+                            <div class="text-[11px] text-white/45">TF-IDF + LinearSVC · ~1&nbsp;ms</div>
+                        </div>
+                        <span class="decided ml-auto hidden text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-400/20 text-blue-200 border border-blue-400/30">DECIDED</span>
+                    </div>
+                    <div id="node-accurate" class="node flex items-center gap-3">
+                        <div class="flex flex-col items-center">
+                            <div class="node-dot w-9 h-9 rounded-xl bg-violet-500/20 border border-violet-400/40 flex items-center justify-center text-violet-300">🧠</div>
+                        </div>
+                        <div>
+                            <div class="text-sm font-semibold text-white/90">Accurate tier</div>
+                            <div class="text-[11px] text-white/45">DistilBERT · hard cases only</div>
+                        </div>
+                        <span class="decided ml-auto hidden text-[10px] font-bold px-2 py-0.5 rounded-full bg-violet-400/20 text-violet-200 border border-violet-400/30">DECIDED</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Crisis safety gauge -->
+            <div class="glass-strong rounded-2xl p-4 mb-4">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-[11px] uppercase tracking-wider text-white/45">Crisis safety score</span>
+                    <span id="crisis-val" class="text-xs font-semibold text-white/70">0.00</span>
+                </div>
+                <div class="relative w-full h-2.5 rounded-full bg-white/10 overflow-hidden">
+                    <div id="crisis-fill" class="gauge-fill h-full rounded-full bg-gradient-to-r from-emerald-400 to-amber-400" style="width:0%"></div>
+                    <div id="crisis-thr" class="absolute top-0 h-full w-0.5 bg-white/70" style="left:90%" title="alert threshold"></div>
+                </div>
+                <div class="text-[10px] text-white/40 mt-1.5">White line = alert threshold (recall-tuned)</div>
+            </div>
+
+            <!-- Class probabilities -->
+            <div class="glass-strong rounded-2xl p-4">
+                <div class="text-[11px] uppercase tracking-wider text-white/45 mb-3">Class probabilities</div>
+                <div id="prob-list" class="space-y-2.5">
+                    <div class="text-xs text-white/35">Send a message to see the breakdown.</div>
+                </div>
+            </div>
+
+            <div class="mt-auto pt-4 text-[10px] text-white/30 leading-relaxed">
+                Not a medical device. In crisis, call your local emergency number or 988 (US).
+            </div>
+        </aside>
+
+        <!-- ============ RIGHT: CHAT ============ -->
+        <main class="glass rounded-3xl flex-1 flex flex-col overflow-hidden">
+            <!-- Header -->
+            <header class="px-5 py-4 border-b border-white/10 flex items-center justify-between gap-3">
                 <div class="flex items-center gap-3">
-                    <span id="user-email" class="hidden text-xs text-slate-600 bg-slate-100 border border-slate-200 px-3 py-1.5 rounded-full"></span>
-                    <button id="new-chat-btn" class="px-3 py-2 text-sm font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition duration-300">
-                        New chat
-                    </button>
-                    <button id="logout-btn" class="hidden px-3 py-2 text-sm font-semibold text-white bg-slate-800 rounded-lg hover:bg-slate-900 transition duration-300">
-                        Logout
-                    </button>
-                    <button id="settings-btn" class="text-gray-600 hover:text-blue-600 transition duration-300">
-                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M11.49 3.17c-.38-.057-.77-.09-.77-.09a5 5 0 00-4.04 4.04c-.057.38-.09.77-.09.77a5 5 0 004.04 4.04c.38.057.77.09.77.09a5 5 0 004.04-4.04c.057-.38.09-.77.09-.77a5 5 0 00-4.04-4.04zm-.56 4.9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" clip-rule="evenodd"></path><path d="M12.45 2.02l-.54-1.08a.5.5 0 00-.91 0l-.54 1.08a.5.5 0 01-.45.33l-1.16.2a.5.5 0 00-.27.81l.66.7a.5.5 0 01.16.51l-.23 1.15a.5.5 0 00.74.52l1.04-.2a.5.5 0 01.52.16l.7.66a.5.5 0 00.81-.27l.2-1.16a.5.5 0 01.33-.45l1.08-.54a.5.5 0 000-.91l-1.08-.54a.5.5 0 01-.33-.45l-.2-1.16a.5.5 0 00-.81-.27l-.66.7a.5.5 0 01-.51.16l-1.15-.23a.5.5 0 00-.52.74z"></path></svg>
-                    </button>
+                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-lg shadow-lg">🧠</div>
+                    <div>
+                        <h1 class="text-lg font-extrabold text-white leading-tight">Mindful</h1>
+                        <p class="text-[11px] text-white/45">Hybrid cascade · SVC → DistilBERT · Gemini-grounded</p>
+                    </div>
                 </div>
-            </div>
+                <div class="flex items-center gap-2">
+                    <span id="user-email" class="hidden text-[11px] text-white/60 bg-white/5 border border-white/10 px-2.5 py-1.5 rounded-full"></span>
+                    <button id="tts-btn" title="Toggle voice replies" class="w-9 h-9 rounded-xl glass-strong hover:bg-white/12 flex items-center justify-center text-white/70">🔇</button>
+                    <button id="new-chat-btn" class="text-xs font-semibold text-white/85 glass-strong px-3 py-2 rounded-xl hover:bg-white/12">New chat</button>
+                    <button id="logout-btn" class="hidden text-xs font-semibold text-white bg-white/10 border border-white/15 px-3 py-2 rounded-xl hover:bg-white/15">Logout</button>
+                </div>
+            </header>
 
-            <div id="chat-messages" class="flex-1 p-6 overflow-y-auto chat-container space-y-4 bg-gradient-to-b from-white/20 to-white/0">
-                <div class="flex justify-start">
-                    <div class="bot-message p-4 max-w-md shadow-sm">
-                        Hello! I'm here to listen. You can tell me what's on your mind.
+            <!-- Crisis banner -->
+            <div id="crisis-banner" class="hidden mx-4 mt-4 rounded-2xl border border-red-400/40 bg-red-500/15 p-4 fade-in">
+                <div class="flex items-start gap-3">
+                    <div class="text-xl">🆘</div>
+                    <div class="text-sm text-red-100">
+                        <div class="font-bold mb-1">You matter, and support is available right now.</div>
+                        <div class="text-red-100/80">If you might be in danger, call your local emergency number. In the U.S., call or text <b>988</b> (Suicide &amp; Crisis Lifeline), any time. You can also text <b>HOME</b> to <b>741741</b>.</div>
                     </div>
                 </div>
             </div>
 
-            <div id="suggestions" class="hidden px-6 py-3 border-t border-gray-200 bg-white/60">
-                <div class="text-xs font-semibold text-slate-600 mb-2">Suggestions</div>
-                <div id="suggestions-row" class="flex gap-2 overflow-x-auto pb-1"></div>
+            <!-- Messages -->
+            <div id="chat-messages" class="flex-1 p-5 overflow-y-auto chat-scroll space-y-4"></div>
+
+            <!-- Suggestions -->
+            <div id="suggestions" class="hidden px-5 pb-1">
+                <div class="flex gap-2 overflow-x-auto pb-2" id="suggestions-row"></div>
             </div>
 
-            <div class="p-4 border-t border-gray-200 bg-gray-50 flex items-center rounded-br-2xl">
-                <button id="voice-btn" class="bg-teal-600 text-white p-3 rounded-full shadow-lg hover:bg-teal-700 transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-opacity-50 mr-4">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a4 4 0 110-8 4 4 0 010 8z"></path></svg>
-                </button>
-                <input type="text" id="userInput" placeholder="Type your message here..." class="flex-1 p-3 rounded-full border border-gray-300 mr-4 input-box text-gray-900">
-                <button id="send-btn" class="bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition duration-300 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                </button>
+            <!-- Composer -->
+            <div class="p-4 border-t border-white/10">
+                <div class="flex items-end gap-2 glass-strong rounded-2xl p-2">
+                    <button id="voice-btn" title="Voice input" class="w-11 h-11 flex-shrink-0 rounded-xl bg-white/8 hover:bg-white/14 flex items-center justify-center text-white/70">🎙️</button>
+                    <textarea id="userInput" rows="1" placeholder="Share what's on your mind…"
+                        class="flex-1 bg-transparent resize-none text-white placeholder:text-white/35 px-2 py-2.5 max-h-32"></textarea>
+                    <button id="send-btn" class="w-11 h-11 flex-shrink-0 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 flex items-center justify-center text-white shadow-lg disabled:opacity-50">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                    </button>
+                </div>
+                <p class="text-[10px] text-white/30 mt-2 text-center">Mindful is an AI and can make mistakes. It is not a substitute for professional care.</p>
             </div>
-        </div>
-    </div>
-
-    <div id="settings-modal" class="modal fixed inset-0 flex items-center justify-center">
-        <div class="modal-content bg-white p-6 rounded-lg shadow-2xl w-full max-w-md">
-            <h2 class="text-2xl font-bold mb-4 text-center">Customize Your Experience</h2>
-            <div class="mb-4">
-                <label for="bg-color" class="block text-sm font-medium text-gray-700">Background Color</label>
-                <input type="color" id="bg-color" value="#f7fafc" class="mt-1 w-full h-10 border border-gray-300 rounded-md">
-            </div>
-            <div class="mb-4">
-                <label for="chatbox-color" class="block text-sm font-medium text-gray-700">Chat Box Color</label>
-                <input type="color" id="chatbox-color" value="#f7fafc" class="mt-1 w-full h-10 border border-gray-300 rounded-md">
-            </div>
-            <div class="mb-4">
-                <label for="bg-image" class="block text-sm font-medium text-gray-700">Background Image</label>
-                <select id="bg-image" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                    <option value="">None</option>
-                    <option value="https://images.unsplash.com/photo-1518623489625-11e2f75439b1?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D">Nature</option>
-                    <option value="https://images.unsplash.com/photo-1506748686214-e9df14d4d12c?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D">Sunset</option>
-                    <option value="https://images.unsplash.com/photo-1549692520-f1c500e23803?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D">Abstract</option>
-                    <option value="https://images.unsplash.com/photo-1519669556885-ce279ac61bbe?q=80&w=2787&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D">Mountains</option>
-                    <option value="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=2946&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D">Beach</option>
-                    <option value="https://images.unsplash.com/photo-1498804103079-a6351b050096?q=80&w=2787&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D">Coffee</option>
-                    <option value="https://images.unsplash.com/photo-1517404215738-15263e9f9178?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D">Cozy Room</option>
-                    <option value="https://images.unsplash.com/photo-1513519245088-0e12902e5b38?q=80&w=2787&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D">Books</option>
-                    <option value="https://images.unsplash.com/photo-1518066000714-58c45f1a2c0a?q=80&w=2787&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D">Minimal</option>
-                    <option value="https://images.unsplash.com/photo-1499714652252-4d2c88226e69?q=80&w=2787&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D">Sky</option>
-                </select>
-            </div>
-            <div class="mb-4">
-                <label for="font-size" class="block text-sm font-medium text-gray-700">Font Size</label>
-                <select id="font-size" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                    <option value="12px">Small</option>
-                    <option value="14px">Normal</option>
-                    <option value="16px" selected>Large</option>
-                    <option value="18px">Extra Large</option>
-                </select>
-            </div>
-            <div class="mb-4">
-                <label for="font-style" class="block text-sm font-medium text-gray-700">Font Style</label>
-                <select id="font-style" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                    <option value="'Inter', sans-serif" selected>Inter</option>
-                    <option value="'Roboto', sans-serif">Roboto</option>
-                    <option value="'Open Sans', sans-serif">Open Sans</option>
-                    <option value="'Lato', sans-serif">Lato</option>
-                    <option value="'Montserrat', sans-serif">Montserrat</option>
-                    <option value="'Poppins', sans-serif">Poppins</option>
-                    <option value="'Noto Sans', sans-serif">Noto Sans</option>
-                    <option value="'Merriweather', serif">Merriweather</option>
-                    <option value="'Playfair Display', serif">Playfair Display</option>
-                    <option value="'Georgia', serif">Georgia</option>
-                    <option value="'Times New Roman', serif">Times New Roman</option>
-                    <option value="'Garamond', serif">Garamond</option>
-                    <option value="'Courier New', monospace">Courier New</option>
-                    <option value="'Comic Sans MS', cursive">Comic Sans MS</option>
-                    <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
-                    <option value="'Verdana', sans-serif">Verdana</option>
-                    <option value="'Arial', sans-serif">Arial</option>
-                    <option value="'Helvetica', sans-serif">Helvetica</option>
-                    <option value="'Tahoma', sans-serif">Tahoma</option>
-                    <option value="'Consolas', monospace">Consolas</option>
-                    <option value="'Lucida Console', monospace">Lucida Console</option>
-                </select>
-            </div>
-            <div class="mt-6 flex justify-end space-x-3">
-                <button id="close-modal-btn" class="px-4 py-2 text-sm font-medium rounded-md text-gray-700 bg-gray-200 hover:bg-gray-300">Close</button>
-            </div>
-        </div>
+        </main>
     </div>
 
     <script>
-        const chatMessages = document.getElementById("chat-messages");
-        const userInput = document.getElementById("userInput");
-        const sendBtn = document.getElementById("send-btn");
-        const settingsBtn = document.getElementById("settings-btn");
-        const settingsModal = document.getElementById("settings-modal");
-        const closeModalBtn = document.getElementById("close-modal-btn");
-        const bgColorInput = document.getElementById("bg-color");
-        const chatboxColorInput = document.getElementById("chatbox-color");
-        const bgImageSelect = document.getElementById("bg-image");
-        const fontSizeSelect = document.getElementById("font-size");
-        const fontStyleSelect = document.getElementById("font-style");
-        const voiceBtn = document.getElementById("voice-btn");
-        const userEmailEl = document.getElementById("user-email");
-        const logoutBtn = document.getElementById("logout-btn");
-        const newChatBtn = document.getElementById("new-chat-btn");
-        const suggestionsWrap = document.getElementById("suggestions");
-        const suggestionsRow = document.getElementById("suggestions-row");
+        const CLASS_COLORS = {
+            "Normal": "#34d399", "Stress": "#fbbf24", "Anxiety": "#38bdf8",
+            "Depression": "#818cf8", "Bipolar": "#a78bfa",
+            "Personality disorder": "#e879f9", "Suicidal": "#f87171"
+        };
 
-        // UI elements for insights (still included for a complete look)
-        const stressFill = document.getElementById("stress-fill");
-        const stressText = document.getElementById("stress-text");
-        const anxietyFill = document.getElementById("anxiety-fill");
-        const anxietyText = document.getElementById("anxiety-text");
-        const depressionFill = document.getElementById("depression-fill");
-        const depressionText = document.getElementById("depression-text");
+        const el = (id) => document.getElementById(id);
+        const chatMessages = el("chat-messages");
+        const userInput = el("userInput");
+        const sendBtn = el("send-btn");
+        const voiceBtn = el("voice-btn");
+        const ttsBtn = el("tts-btn");
+        const userEmailEl = el("user-email");
+        const logoutBtn = el("logout-btn");
+        const newChatBtn = el("new-chat-btn");
+        const suggestionsWrap = el("suggestions");
+        const suggestionsRow = el("suggestions-row");
+        const crisisBanner = el("crisis-banner");
 
         let currentUser = null;
         let isSending = false;
-        let lastSend = { text: null, at: 0 };
-
-        function setLoggedInUser(email) {
-            userEmailEl.textContent = email ? email : "";
-            userEmailEl.classList.toggle('hidden', !email);
-            logoutBtn.classList.toggle('hidden', !email);
-        }
-
-        async function refreshAuth() {
-            const res = await fetch("/api/me", { credentials: "same-origin" });
-            const data = await res.json().catch(() => ({}));
-            if (data && data.authenticated && data.user && data.user.email) {
-                setLoggedInUser(data.user.email);
-                currentUser = data.user;
-                loadHistory();
-                return true;
-            }
-            setLoggedInUser(null);
-            window.location.href = "/login";
-            return false;
-        }
-
-        // Check for Web Speech API support
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        const SpeechSynthesis = window.SpeechSynthesis;
+        let ttsOn = false;
         const synth = window.speechSynthesis;
-        let recognition = null;
-        if (SpeechRecognition) {
-            recognition = new SpeechRecognition();
-            recognition.continuous = false;
-            recognition.interimResults = false;
-            recognition.lang = 'en-US';
-        } else {
-            voiceBtn.disabled = true;
-            voiceBtn.style.backgroundColor = 'gray';
-            console.log("Speech Recognition not supported by this browser.");
-        }
 
-        function escapeHtml(s) {
-            return String(s || "")
-                .replaceAll("&", "&amp;")
-                .replaceAll("<", "&lt;")
-                .replaceAll(">", "&gt;")
-                .replaceAll("\"", "&quot;")
-                .replaceAll("'", "&#39;");
-        }
+        // ---------- helpers ----------
+        function escapeHtml(s){return String(s||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;");}
+        function fmt(t){return escapeHtml(t).replaceAll("\n","<br>");}
 
-        function formatMessageHtml(text) {
-            return escapeHtml(text).replaceAll("\n", "<br>");
-        }
-
-        function addMessage(text, sender, meta = {}) {
-            const msg = document.createElement("div");
-            msg.className = `flex ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
+        function addMessage(text, sender, opts={}){
+            const row = document.createElement("div");
+            row.className = `flex msg-in ${sender==='user'?'justify-end':'justify-start'}`;
+            const wrap = document.createElement("div");
+            wrap.className = "flex items-end gap-2 max-w-[85%]";
             const bubble = document.createElement("div");
-            bubble.className = `${sender === 'user' ? 'user-message' : 'bot-message'} p-4 max-w-md shadow-sm`;
-            if (meta.ts) bubble.dataset.ts = String(meta.ts);
-            bubble.innerHTML = formatMessageHtml(text);
-            msg.appendChild(bubble);
-            chatMessages.appendChild(msg);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-            if (sender === 'bot' && text) {
-                speakText(String(text));
+            bubble.className = `${sender==='user'?'bubble-user':'bubble-bot'} px-4 py-3 text-[15px] leading-relaxed`;
+            bubble.innerHTML = fmt(text);
+            if(sender==='bot'){
+                const av = document.createElement("div");
+                av.className = "w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-xs flex-shrink-0";
+                av.textContent = "🧠";
+                wrap.appendChild(av);
             }
+            wrap.appendChild(bubble);
+            row.appendChild(wrap);
+            chatMessages.appendChild(row);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            return bubble;
         }
 
-        function addBotMessageStreaming(text, meta = {}, onDone = null) {
-            const msg = document.createElement("div");
-            msg.className = "flex justify-start";
-            const bubble = document.createElement("div");
-            bubble.className = "bot-message p-4 max-w-md shadow-sm";
-            if (meta.ts) bubble.dataset.ts = String(meta.ts);
-            bubble.innerHTML = "";
-            msg.appendChild(bubble);
-            chatMessages.appendChild(msg);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-
-            const safe = String(text || "");
-            let i = 0;
-            const step = 3;
-            const timer = setInterval(() => {
-                i = Math.min(safe.length, i + step);
-                bubble.innerHTML = formatMessageHtml(safe.slice(0, i));
+        function streamBot(text, onDone){
+            const bubble = addMessage("", "bot");
+            const safe = String(text||"");
+            let i=0;
+            const timer = setInterval(()=>{
+                i = Math.min(safe.length, i+3);
+                bubble.innerHTML = fmt(safe.slice(0,i));
                 chatMessages.scrollTop = chatMessages.scrollHeight;
-                if (i >= safe.length) {
-                    clearInterval(timer);
-                    if (safe) speakText(safe);
-                    if (typeof onDone === "function") onDone();
-                }
-            }, 12);
+                if(i>=safe.length){ clearInterval(timer); if(ttsOn) speak(safe); if(onDone) onDone(); }
+            }, 10);
         }
 
-        function historyKey() {
-            return currentUser?.id ? `chatHistory:${currentUser.id}` : null;
+        function addTyping(){
+            const d = document.createElement("div");
+            d.id="typing"; d.className="flex justify-start msg-in";
+            d.innerHTML = `<div class="flex items-end gap-2"><div class="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-xs">🧠</div><div class="bubble-bot px-5 py-4"><div class="dot-typing"></div></div></div>`;
+            chatMessages.appendChild(d); chatMessages.scrollTop = chatMessages.scrollHeight;
         }
+        function removeTyping(){ const t=el("typing"); if(t) t.remove(); }
 
-        function saveHistory() {
-            const key = historyKey();
-            if (!key) return;
-            const items = [];
-            for (const row of chatMessages.querySelectorAll("div.flex")) {
-                const bubble = row.querySelector(".user-message, .bot-message");
-                if (!bubble) continue;
-                const sender = row.className.includes("justify-end") ? "user" : "bot";
-                const ts = bubble.dataset.ts ? Number(bubble.dataset.ts) : Date.now() / 1000;
-                items.push({ sender, text: bubble.innerText || "", ts });
+        function speak(t){ if(synth){ synth.cancel(); synth.speak(new SpeechSynthesisUtterance(t)); } }
+
+        // ---------- analysis panel ----------
+        function updateAnalysis(emotion, confidence, explain){
+            explain = explain || {};
+            const color = CLASS_COLORS[emotion] || "#93c5fd";
+
+            el("state-label").textContent = emotion || "—";
+            el("state-label").style.color = color;
+            const cpct = Math.round((confidence||0)*100);
+            el("state-conf").textContent = cpct?`${cpct}%`:"";
+            el("conf-fill").style.width = `${cpct}%`;
+            el("conf-fill").style.background = `linear-gradient(90deg, ${color}aa, ${color})`;
+
+            // pipeline
+            ["safety","fast","accurate"].forEach(t=>{
+                const n = el(`node-${t}`);
+                const decided = explain.decided_by === t;
+                n.classList.toggle("active", decided || tierIndex(explain.decided_by) >= tierIndex(t));
+                n.querySelector(".decided").classList.toggle("hidden", !decided);
+            });
+
+            // crisis gauge
+            const cs = explain.crisis_score ?? 0;
+            el("crisis-val").textContent = cs.toFixed(2);
+            el("crisis-fill").style.width = `${Math.round(cs*100)}%`;
+            el("crisis-fill").style.background = explain.crisis
+                ? "linear-gradient(90deg,#f87171,#ef4444)"
+                : "linear-gradient(90deg,#34d399,#fbbf24)";
+
+            // class probabilities
+            const probs = explain.class_probabilities || {};
+            const list = el("prob-list");
+            let entries = Object.entries(probs).sort((a,b)=>b[1]-a[1]);
+            // Safety override short-circuits the multiclass probs; show the
+            // detected state at its score instead of leaving stale bars.
+            if(entries.length===0 && emotion && emotion!=="—"){
+                entries = [[emotion, confidence||0]];
             }
-            localStorage.setItem(key, JSON.stringify(items));
-        }
-
-        function loadHistory() {
-            const key = historyKey();
-            if (!key) return false;
-            const raw = localStorage.getItem(key);
-            if (!raw) return false;
-            let items = null;
-            try { items = JSON.parse(raw); } catch { return false; }
-            if (!Array.isArray(items) || items.length === 0) return false;
-            chatMessages.innerHTML = "";
-            for (const it of items) addMessage(it.text, it.sender === "user" ? "user" : "bot", { ts: it.ts });
-            return true;
-        }
-
-        function setSuggestions(list) {
-            const items = Array.isArray(list) ? list.filter(Boolean).slice(0, 6) : [];
-            suggestionsRow.innerHTML = "";
-            if (items.length === 0) {
-                suggestionsWrap.classList.add("hidden");
+            if(entries.length===0){
+                list.innerHTML = '<div class="text-xs text-white/35">Send a message to see the breakdown.</div>';
                 return;
             }
-            for (const label of items) {
-                const btn = document.createElement("button");
-                btn.className = "whitespace-nowrap px-3 py-2 text-sm bg-white border border-slate-200 rounded-full hover:bg-slate-50";
-                btn.textContent = label;
-                btn.addEventListener("click", () => {
-                    userInput.value = label;
-                    sendMessage();
-                });
-                suggestionsRow.appendChild(btn);
+            list.innerHTML = "";
+            for(const [name,p] of entries){
+                const c = CLASS_COLORS[name] || "#93c5fd";
+                const row = document.createElement("div");
+                row.innerHTML = `
+                    <div class="flex justify-between text-[11px] mb-1">
+                        <span class="text-white/70">${escapeHtml(name)}</span>
+                        <span class="text-white/45">${Math.round(p*100)}%</span>
+                    </div>
+                    <div class="w-full h-1.5 rounded-full bg-white/8 overflow-hidden">
+                        <div class="prob-fill h-full rounded-full" style="width:${Math.round(p*100)}%;background:${c}"></div>
+                    </div>`;
+                list.appendChild(row);
+            }
+        }
+        function tierIndex(t){ return {safety:0, fast:1, accurate:2}[t] ?? -1; }
+
+        // ---------- suggestions ----------
+        function setSuggestions(list){
+            const items = Array.isArray(list)?list.filter(Boolean).slice(0,6):[];
+            suggestionsRow.innerHTML="";
+            if(!items.length){ suggestionsWrap.classList.add("hidden"); return; }
+            for(const label of items){
+                const b=document.createElement("button");
+                b.className="chip whitespace-nowrap px-3 py-1.5 text-xs text-white/80 glass-strong rounded-full border border-white/10";
+                b.textContent=label;
+                b.onclick=()=>{ userInput.value=label; sendMessage(); };
+                suggestionsRow.appendChild(b);
             }
             suggestionsWrap.classList.remove("hidden");
         }
 
-        function addTyping() {
-            const typingDiv = document.createElement("div");
-            typingDiv.className = "typing flex justify-start";
-            typingDiv.setAttribute("id", "typing");
-            typingDiv.innerHTML = `
-                <div class="bg-gray-200 p-4 rounded-xl max-w-md shadow-sm">
-                    <div class="dot-typing"></div>
-                </div>
-            `;
-            chatMessages.appendChild(typingDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-
-        function removeTyping() {
-            const typingDiv = document.getElementById("typing");
-            if (typingDiv) typingDiv.remove();
-        }
-
-        logoutBtn.addEventListener("click", async () => {
-            await fetch("/api/logout", { method: "POST", credentials: "same-origin" });
-            window.location.href = "/login";
-        });
-
-        sendBtn.addEventListener("click", () => sendMessage());
-
-        newChatBtn.addEventListener("click", async () => {
-            suggestionsWrap.classList.add("hidden");
-            suggestionsRow.innerHTML = "";
-            chatMessages.innerHTML = "";
-            addMessage("Hello! I'm here to listen. You can tell me what's on your mind.", "bot", { ts: Date.now() / 1000 });
-            const key = historyKey();
-            if (key) localStorage.removeItem(key);
-            await fetch("/api/reset", { method: "POST", credentials: "same-origin" }).catch(() => {});
-        });
-        
-        // Voice to Text functionality
-        if (recognition) {
-            voiceBtn.addEventListener('click', () => {
-                recognition.start();
-                voiceBtn.innerHTML = '<svg class="w-6 h-6 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a4 4 0 110-8 4 4 0 010 8z"></path></svg>';
-            });
-
-            recognition.addEventListener('result', (event) => {
-                const transcript = event.results[0][0].transcript;
-                userInput.value = transcript;
-                sendMessage();
-            });
-
-            recognition.addEventListener('end', () => {
-                voiceBtn.innerHTML = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a4 4 0 110-8 4 4 0 010 8z"></path></svg>';
-            });
-        }
-        
-        // Text to Speech functionality
-        function speakText(text) {
-            if (synth) {
-                const utterance = new SpeechSynthesisUtterance(text);
-                synth.speak(utterance);
+        // ---------- auth + history ----------
+        async function refreshAuth(){
+            const res = await fetch("/api/me",{credentials:"same-origin"});
+            const data = await res.json().catch(()=>({}));
+            if(data && data.authenticated && data.user){
+                currentUser = data.user;
+                userEmailEl.textContent = data.user.email;
+                userEmailEl.classList.remove("hidden");
+                logoutBtn.classList.remove("hidden");
+                await loadHistory();
+                return true;
             }
+            window.location.href="/login"; return false;
         }
 
-        // Function to update the insights sidebar (using heuristic mapping based on classification)
-        function updateInsightsUI(emotion_label, confidence) {
-            const riskMapping = {
-                'Crisis': { fill: depressionFill, text: depressionText, value: 0.95, level: 'High' },
-                'Depression/Sadness': { fill: depressionFill, text: depressionText, value: 0.70, level: 'Medium' },
-                'Stress/Anxiety': { fill: stressFill, text: stressText, value: 0.80, level: 'High' },
-                'Physical Health': { fill: anxietyFill, text: anxietyText, value: 0.25, level: 'Low' },
-                'Normal': { fill: anxietyFill, text: anxietyText, value: 0.15, level: 'Very Low' },
-                'Model_Error': { fill: stressFill, text: stressText, value: 0.05, level: 'Low' }
-            };
-
-            // Reset all bars visually
-            stressFill.style.width = '0%';
-            anxietyFill.style.width = '0%';
-            depressionFill.style.width = '0%';
-            stressText.textContent = 'Medium (0%)';
-            anxietyText.textContent = 'Low (0%)';
-            depressionText.textContent = 'Very Low (0%)';
-
-            const insight = riskMapping[emotion_label] || riskMapping['Normal'];
-            const percentage = Math.round(insight.value * 100);
-
-            insight.fill.style.width = `${percentage}%`;
-            insight.text.textContent = `${insight.level} (${percentage}%)`;
-
-            const headerTag = document.querySelector('#insights-sidebar p');
-            if (headerTag) {
-                const conf = Number.isFinite(Number(confidence)) ? ` - ${(Number(confidence) * 100).toFixed(0)}%` : '';
-                headerTag.textContent = `Current state: ${emotion_label}${conf}`;
-            }
-        }
-        
-        // Function to handle sending a message to the backend
-        async function sendMessage() {
-            const text = userInput.value.trim();
-            if (text === "") return;
-            if (isSending) return;
-
-            // Guard against accidental double-submits (double click / enter+click)
-            const now = Date.now();
-            if (lastSend.text === text && (now - lastSend.at) < 800) return;
-            lastSend = { text, at: now };
-
-            isSending = true;
-            userInput.disabled = true;
-            sendBtn.disabled = true;
-            addMessage(text, "user", { ts: Date.now() / 1000 });
-            userInput.value = "";
-            saveHistory();
-
-            addTyping();
-
-            try {
-                // API endpoint:
-                // - If served by Flask: uses same-origin `/chat`
-                // - If opened as a local file: falls back to `http://127.0.0.1:5000/chat`
-                const qs = new URLSearchParams(window.location.search);
-                const apiOverride = qs.get("api");
-                const apiUrl = apiOverride
-                    ? apiOverride
-                    : (window.location.protocol === "file:"
-                        ? "http://127.0.0.1:5000/chat"
-                        : `${window.location.origin}/chat`);
-
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    credentials: "same-origin",
-                    body: JSON.stringify({ message: text })
-                });
-
-                if (!response.ok) {
-                    if (response.status === 401) {
-                        removeTyping();
-                        addMessage("Please sign in to continue.", "bot");
-                        await refreshAuth();
-                        return;
-                    }
-                    throw new Error(`HTTP error! status: ${response.status}`);
+        async function loadHistory(){
+            try{
+                const res = await fetch("/api/history",{credentials:"same-origin"});
+                const data = await res.json().catch(()=>({}));
+                const msgs = (data && data.messages) || [];
+                chatMessages.innerHTML="";
+                if(!msgs.length){
+                    addMessage("Hi, I'm glad you're here. This is a private space — tell me what's on your mind, and I'll listen. 💙","bot");
+                    return;
                 }
+                let last=null;
+                for(const m of msgs){ addMessage(m.text, m.role==="user"?"user":"bot"); last=m; }
+                if(last && last.role!=="user" && last.label){
+                    el("state-label").textContent=last.label;
+                    el("state-label").style.color=CLASS_COLORS[last.label]||"#93c5fd";
+                }
+            }catch(e){ console.error(e); }
+        }
 
-                const data = await response.json();
-                const botReply = data.reply;
-                const predictedEmotion = typeof data.emotion === "string" && data.emotion ? data.emotion : "Normal";
-                const confidenceScore = Number.isFinite(Number(data.confidence)) ? Number(data.confidence) : null;
+        logoutBtn.onclick = async ()=>{ await fetch("/api/logout",{method:"POST",credentials:"same-origin"}); window.location.href="/login"; };
+        newChatBtn.onclick = async ()=>{
+            await fetch("/api/reset",{method:"POST",credentials:"same-origin"}).catch(()=>{});
+            chatMessages.innerHTML=""; crisisBanner.classList.add("hidden");
+            setSuggestions([]); updateAnalysis("—",0,{});
+            el("prob-list").innerHTML = '<div class="text-xs text-white/35">Send a message to see the breakdown.</div>';
+            addMessage("Fresh start. What would you like to talk about? 💙","bot");
+        };
 
+        ttsBtn.onclick = ()=>{ ttsOn=!ttsOn; ttsBtn.textContent=ttsOn?"🔊":"🔇"; ttsBtn.classList.toggle("bg-white/12",ttsOn); if(!ttsOn&&synth) synth.cancel(); };
+
+        // ---------- send ----------
+        async function sendMessage(){
+            const text = userInput.value.trim();
+            if(!text || isSending) return;
+            isSending=true; sendBtn.disabled=true;
+            addMessage(text,"user"); userInput.value=""; userInput.style.height="auto";
+            addTyping();
+            try{
+                const res = await fetch("/chat",{
+                    method:"POST", headers:{"Content-Type":"application/json"},
+                    credentials:"same-origin", body:JSON.stringify({message:text})
+                });
+                if(!res.ok){
+                    removeTyping();
+                    if(res.status===401){ addMessage("Please sign in to continue.","bot"); await refreshAuth(); return; }
+                    if(res.status===503){ addMessage("The AI models aren't loaded yet on the server. Please try again shortly.","bot"); return; }
+                    throw new Error("HTTP "+res.status);
+                }
+                const data = await res.json();
                 removeTyping();
-
-                // Chat bubble shows only the response; insights sidebar carries classifier output.
-                addBotMessageStreaming(botReply, { ts: data.ts }, () => saveHistory());
-                
-                // Update the sidebar based on the classification result
-                updateInsightsUI(predictedEmotion, confidenceScore);
+                const emotion = data.emotion || "Normal";
+                const explain = data.explain || {};
+                crisisBanner.classList.toggle("hidden", !explain.crisis);
+                streamBot(data.reply);
+                updateAnalysis(emotion, data.confidence, explain);
                 setSuggestions(data.suggestions);
-
-            } catch (error) {
-                console.error('Error sending message:', error);
-                removeTyping();
-                addMessage("Sorry, I'm having trouble connecting right now. Please check the backend server and ensure CORS is enabled.", "bot");
-            }
-            finally {
-                isSending = false;
-                userInput.disabled = false;
-                sendBtn.disabled = false;
-                userInput.focus();
+            }catch(err){
+                console.error(err); removeTyping();
+                addMessage("Sorry, I'm having trouble connecting right now. Please try again.","bot");
+            }finally{
+                isSending=false; sendBtn.disabled=false; userInput.focus();
             }
         }
 
-        userInput.addEventListener("keypress", function(e) {
-            if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-            }
-        });
+        sendBtn.onclick = ()=>sendMessage();
+        userInput.addEventListener("keydown",(e)=>{ if(e.key==="Enter"&&!e.shiftKey){ e.preventDefault(); sendMessage(); }});
+        userInput.addEventListener("input",()=>{ userInput.style.height="auto"; userInput.style.height=Math.min(userInput.scrollHeight,128)+"px"; });
 
-        // Initialize auth state on load
+        // ---------- voice input ----------
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recog=null;
+        if(SR){
+            recog=new SR(); recog.continuous=false; recog.interimResults=false; recog.lang="en-US";
+            voiceBtn.onclick=()=>{ try{ recog.start(); voiceBtn.classList.add("animate-pulse"); }catch(e){} };
+            recog.addEventListener("result",(e)=>{ userInput.value=e.results[0][0].transcript; sendMessage(); });
+            recog.addEventListener("end",()=>voiceBtn.classList.remove("animate-pulse"));
+        } else { voiceBtn.disabled=true; voiceBtn.style.opacity=.4; }
+
         refreshAuth();
-
-        // Event listeners for settings modal (customization logic)
-        settingsBtn.addEventListener('click', () => {
-            settingsModal.style.display = 'flex';
-        });
-
-        closeModalBtn.addEventListener('click', () => {
-            settingsModal.style.display = 'none';
-        });
-
-        // Customization logic 
-        bgColorInput.addEventListener('input', (e) => {
-            document.body.style.backgroundColor = e.target.value;
-            document.body.style.backgroundImage = 'none';
-        });
-
-        chatboxColorInput.addEventListener('input', (e) => {
-            chatMessages.style.backgroundColor = e.target.value;
-        });
-        
-        bgImageSelect.addEventListener('change', (e) => {
-            if (e.target.value) {
-                document.body.style.backgroundImage = `url('${e.target.value}')`;
-                document.body.style.backgroundColor = 'transparent';
-            } else {
-                document.body.style.backgroundImage = 'none';
-                document.body.style.backgroundColor = bgColorInput.value;
-            }
-        });
-
-        fontSizeSelect.addEventListener('change', (e) => {
-            document.body.style.fontSize = e.target.value;
-        });
-
-        fontStyleSelect.addEventListener('change', (e) => {
-            document.body.style.fontFamily = e.target.value;
-        });
     </script>
 </body>
 </html>

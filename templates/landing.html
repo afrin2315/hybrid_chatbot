@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mindful — Hybrid AI Mental-Health Triage</title>
+<meta name="description" content="A safety-aware mental-health chatbot built on a confidence-gated model cascade with a recall-optimized crisis safety layer.">
+<link rel="stylesheet" href="/static/app.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+    *{box-sizing:border-box;}
+    html{scroll-behavior:smooth;}
+    body{
+        font-family:'Inter',system-ui,sans-serif;color:#e5e7eb;
+        background:
+            radial-gradient(1200px circle at 10% -5%, rgba(59,130,246,0.18), transparent 55%),
+            radial-gradient(1000px circle at 95% 5%, rgba(16,185,129,0.12), transparent 50%),
+            radial-gradient(1100px circle at 50% 105%, rgba(168,85,247,0.14), transparent 55%),
+            linear-gradient(160deg,#060a14 0%,#0b1220 50%,#070b16 100%);
+        background-attachment:fixed;
+    }
+    .glass{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.10);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);}
+    .grad-text{background:linear-gradient(120deg,#60a5fa,#818cf8 40%,#34d399);-webkit-background-clip:text;background-clip:text;color:transparent;}
+    .reveal{opacity:0;transform:translateY(24px);transition:all .7s cubic-bezier(.22,1,.36,1);}
+    .reveal.in{opacity:1;transform:none;}
+    .node-line{background:linear-gradient(180deg,rgba(255,255,255,.25),rgba(255,255,255,.05));}
+    .glow-blue{box-shadow:0 0 40px rgba(59,130,246,.25);}
+    .card-hover{transition:transform .3s,border-color .3s;}
+    .card-hover:hover{transform:translateY(-4px);border-color:rgba(255,255,255,.22);}
+    .bar{height:100%;border-radius:9999px;}
+    @keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+    .floaty{animation:float 5s ease-in-out infinite;}
+    ::-webkit-scrollbar{width:10px;}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:8px;}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="sticky top-0 z-50 glass border-b border-white/10">
+    <div class="max-w-6xl mx-auto px-5 h-16 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-lg">🧠</div>
+            <span class="font-extrabold text-white text-lg">Mindful</span>
+        </div>
+        <div class="hidden md:flex items-center gap-7 text-sm text-white/70">
+            <a href="#how" class="hover:text-white transition">How it works</a>
+            <a href="#results" class="hover:text-white transition">Results</a>
+            <a href="#transparency" class="hover:text-white transition">Transparency</a>
+            <a href="#stack" class="hover:text-white transition">Tech</a>
+        </div>
+        <a href="/login" class="text-sm font-semibold bg-white text-slate-900 px-4 py-2 rounded-xl hover:bg-white/90 transition">Try the demo</a>
+    </div>
+</nav>
+
+<!-- HERO -->
+<header class="max-w-6xl mx-auto px-5 pt-20 pb-16 text-center">
+    <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full glass text-xs text-white/75 mb-7 reveal">
+        <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+        Evidence-driven architecture · live public demo
+    </div>
+    <h1 class="text-4xl md:text-6xl font-black leading-[1.05] tracking-tight reveal">
+        Mental-health AI that<br><span class="grad-text">shows its work.</span>
+    </h1>
+    <p class="mt-6 max-w-2xl mx-auto text-lg text-white/65 reveal">
+        A safety-aware support chatbot built on a <b class="text-white/85">confidence-gated model cascade</b>
+        with an always-on, <b class="text-white/85">recall-optimized crisis layer</b> — designed around the
+        asymmetric cost of errors, and justified by measurement, not guesswork.
+    </p>
+    <div class="mt-9 flex flex-wrap items-center justify-center gap-3 reveal">
+        <a href="/login" class="font-semibold bg-gradient-to-br from-blue-500 to-indigo-600 hover:from-blue-400 hover:to-indigo-500 px-6 py-3 rounded-xl glow-blue transition">Launch the live demo →</a>
+        <a href="#how" class="font-semibold glass hover:bg-white/10 px-6 py-3 rounded-xl transition">See the architecture</a>
+    </div>
+
+    <!-- stat row -->
+    <div class="mt-14 grid grid-cols-2 md:grid-cols-4 gap-4 reveal">
+        <div class="glass rounded-2xl p-5 card-hover">
+            <div class="text-3xl font-black grad-text">0.791</div>
+            <div class="text-xs text-white/55 mt-1">Cascade accuracy<br>(beats both models alone)</div>
+        </div>
+        <div class="glass rounded-2xl p-5 card-hover">
+            <div class="text-3xl font-black grad-text">17×</div>
+            <div class="text-xs text-white/55 mt-1">Faster than<br>transformer-only</div>
+        </div>
+        <div class="glass rounded-2xl p-5 card-hover">
+            <div class="text-3xl font-black grad-text">95.7%</div>
+            <div class="text-xs text-white/55 mt-1">Crisis recall<br>(safety layer)</div>
+        </div>
+        <div class="glass rounded-2xl p-5 card-hover">
+            <div class="text-3xl font-black grad-text">51k</div>
+            <div class="text-xs text-white/55 mt-1">Labeled examples<br>7 clinical classes</div>
+        </div>
+    </div>
+</header>
+
+<!-- PROBLEM / THESIS -->
+<section class="max-w-5xl mx-auto px-5 py-14">
+    <div class="glass rounded-3xl p-8 md:p-10 reveal">
+        <h2 class="text-2xl md:text-3xl font-extrabold text-white">The core idea: errors aren't symmetric</h2>
+        <p class="mt-4 text-white/70 leading-relaxed">
+            Missing a genuine crisis is potentially catastrophic. A false crisis alarm just shows a
+            supportive message and a helpline. Those costs are wildly different — so the system
+            <b class="text-white/90">decouples the two jobs</b>: a dedicated crisis detector tuned for
+            <b class="text-white/90">recall</b>, and a routine classifier tuned for
+            <b class="text-white/90">accuracy and speed</b>. Each is measured on its own terms, instead of
+            forcing one model to a single compromise operating point.
+        </p>
+    </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how" class="max-w-6xl mx-auto px-5 py-14">
+    <h2 class="text-center text-3xl md:text-4xl font-black reveal">How the cascade decides</h2>
+    <p class="text-center text-white/55 mt-3 mb-12 reveal">Every message flows through three stages — and the demo shows you which one answered.</p>
+
+    <div class="grid md:grid-cols-3 gap-5">
+        <div class="glass rounded-3xl p-7 card-hover reveal">
+            <div class="w-12 h-12 rounded-2xl bg-red-500/20 border border-red-400/40 flex items-center justify-center text-2xl mb-4">🛡️</div>
+            <div class="text-xs font-bold uppercase tracking-wider text-red-300/80">Stage 1 · always on</div>
+            <h3 class="text-xl font-bold text-white mt-1">Safety layer</h3>
+            <p class="text-sm text-white/60 mt-2 leading-relaxed">A high-recall crisis detector scores every message. Tuned to catch <b class="text-white/85">95.7%</b> of crises — it can override everything else.</p>
+        </div>
+        <div class="glass rounded-3xl p-7 card-hover reveal">
+            <div class="w-12 h-12 rounded-2xl bg-blue-500/20 border border-blue-400/40 flex items-center justify-center text-2xl mb-4">⚡</div>
+            <div class="text-xs font-bold uppercase tracking-wider text-blue-300/80">Stage 2 · the fast path</div>
+            <h3 class="text-xl font-bold text-white mt-1">Fast tier</h3>
+            <p class="text-sm text-white/60 mt-2 leading-relaxed">A calibrated TF-IDF + LinearSVC answers confident cases in <b class="text-white/85">~1 ms</b>. Handles ~58% of traffic at near-zero cost.</p>
+        </div>
+        <div class="glass rounded-3xl p-7 card-hover reveal">
+            <div class="w-12 h-12 rounded-2xl bg-violet-500/20 border border-violet-400/40 flex items-center justify-center text-2xl mb-4">🧠</div>
+            <div class="text-xs font-bold uppercase tracking-wider text-violet-300/80">Stage 3 · hard cases only</div>
+            <h3 class="text-xl font-bold text-white mt-1">Accurate tier</h3>
+            <p class="text-sm text-white/60 mt-2 leading-relaxed">Only the ~42% of low-confidence messages reach a fine-tuned <b class="text-white/85">DistilBERT</b> — the expensive model, used sparingly.</p>
+        </div>
+    </div>
+</section>
+
+<!-- RESULTS -->
+<section id="results" class="max-w-5xl mx-auto px-5 py-14">
+    <h2 class="text-center text-3xl md:text-4xl font-black reveal">"Why not just one model?"</h2>
+    <p class="text-center text-white/55 mt-3 mb-10 reveal">Because we measured it. The gated cascade beats each model alone — and is far cheaper than the transformer.</p>
+
+    <div class="glass rounded-3xl p-6 md:p-8 reveal overflow-x-auto">
+        <table class="w-full text-sm min-w-[520px]">
+            <thead>
+                <tr class="text-white/50 text-left border-b border-white/10">
+                    <th class="py-3 pr-4 font-semibold">Architecture</th>
+                    <th class="py-3 px-4 font-semibold text-right">Accuracy</th>
+                    <th class="py-3 px-4 font-semibold text-right">Macro-F1</th>
+                    <th class="py-3 px-4 font-semibold text-right">Median latency</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="border-b border-white/5">
+                    <td class="py-3 pr-4 text-white/80">SVC only <span class="text-white/40">(fast tier)</span></td>
+                    <td class="py-3 px-4 text-right text-white/70">0.775</td>
+                    <td class="py-3 px-4 text-right text-white/70">0.716</td>
+                    <td class="py-3 px-4 text-right text-emerald-300">1.5 ms</td>
+                </tr>
+                <tr class="border-b border-white/5">
+                    <td class="py-3 pr-4 text-white/80">DistilBERT only <span class="text-white/40">(accurate tier)</span></td>
+                    <td class="py-3 px-4 text-right text-white/70">0.770</td>
+                    <td class="py-3 px-4 text-right text-white/70">0.731</td>
+                    <td class="py-3 px-4 text-right text-amber-300">58.6 ms</td>
+                </tr>
+                <tr class="bg-white/5 rounded-xl">
+                    <td class="py-3 pr-4 font-bold text-white">★ Cascade <span class="text-white/40 font-normal">(gated)</span></td>
+                    <td class="py-3 px-4 text-right font-bold text-emerald-300">0.791</td>
+                    <td class="py-3 px-4 text-right font-bold text-emerald-300">0.748</td>
+                    <td class="py-3 px-4 text-right font-bold text-white">3.5 ms</td>
+                </tr>
+            </tbody>
+        </table>
+        <p class="text-xs text-white/40 mt-4">Held-out test set (7,660 examples, 7 classes). The cascade routes only 42% of messages to DistilBERT. Full write-up in <span class="text-white/60">REPORT.md</span>.</p>
+    </div>
+
+    <!-- crisis tradeoff -->
+    <div class="grid md:grid-cols-2 gap-5 mt-6">
+        <div class="glass rounded-2xl p-6 reveal">
+            <div class="text-xs font-bold uppercase tracking-wider text-white/50 mb-3">Crisis recall — deployed (recall-first)</div>
+            <div class="flex items-end gap-2"><span class="text-4xl font-black text-emerald-300">95.7%</span><span class="text-white/45 mb-1 text-sm">of crises caught</span></div>
+            <div class="w-full h-2 rounded-full bg-white/10 mt-3"><div class="bar bg-gradient-to-r from-emerald-400 to-teal-400" style="width:95.7%"></div></div>
+        </div>
+        <div class="glass rounded-2xl p-6 reveal">
+            <div class="text-xs font-bold uppercase tracking-wider text-white/50 mb-3">If tuned for F1 instead</div>
+            <div class="flex items-end gap-2"><span class="text-4xl font-black text-white/70">79.9%</span><span class="text-white/45 mb-1 text-sm">of crises caught</span></div>
+            <div class="w-full h-2 rounded-full bg-white/10 mt-3"><div class="bar bg-gradient-to-r from-slate-400 to-slate-500" style="width:79.9%"></div></div>
+            <p class="text-xs text-white/40 mt-3">We accept more false alarms to recover ~16 pts of real crises. That trade is the whole point.</p>
+        </div>
+    </div>
+</section>
+
+<!-- TRANSPARENCY -->
+<section id="transparency" class="max-w-6xl mx-auto px-5 py-14">
+    <div class="grid md:grid-cols-2 gap-8 items-center">
+        <div class="reveal">
+            <h2 class="text-3xl md:text-4xl font-black">No black box.</h2>
+            <p class="mt-4 text-white/65 leading-relaxed">
+                Every reply exposes exactly how the decision was made — which tier answered, the crisis
+                score against its threshold, and the full class-probability breakdown. You watch the
+                cascade work in real time.
+            </p>
+            <ul class="mt-6 space-y-3 text-sm">
+                <li class="flex items-center gap-3"><span class="text-emerald-400">✓</span> Live routing pipeline (Safety → Fast → Accurate)</li>
+                <li class="flex items-center gap-3"><span class="text-emerald-400">✓</span> Crisis-safety gauge with the tuned threshold</li>
+                <li class="flex items-center gap-3"><span class="text-emerald-400">✓</span> Per-class confidence bars for every message</li>
+                <li class="flex items-center gap-3"><span class="text-emerald-400">✓</span> Persistent, private per-user history</li>
+            </ul>
+        </div>
+        <!-- mock panel -->
+        <div class="glass rounded-3xl p-6 reveal floaty">
+            <div class="text-[11px] uppercase tracking-wider text-white/45 mb-3">Live AI analysis</div>
+            <div class="glass rounded-2xl p-4 mb-3">
+                <div class="flex justify-between items-baseline"><span class="text-2xl font-extrabold text-sky-300">Anxiety</span><span class="text-white/60 text-sm">78%</span></div>
+                <div class="w-full h-1.5 rounded-full bg-white/10 mt-2"><div class="bar bg-gradient-to-r from-sky-400 to-blue-400" style="width:78%"></div></div>
+            </div>
+            <div class="space-y-2">
+                <div class="flex items-center gap-3 opacity-50"><div class="w-8 h-8 rounded-lg bg-red-500/20 border border-red-400/40 flex items-center justify-center">🛡️</div><span class="text-sm text-white/70">Safety layer</span></div>
+                <div class="flex items-center gap-3"><div class="w-8 h-8 rounded-lg bg-blue-500/20 border border-blue-400/40 flex items-center justify-center">⚡</div><span class="text-sm text-white/90 font-semibold">Fast tier</span><span class="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-400/20 text-blue-200 border border-blue-400/30">DECIDED</span></div>
+                <div class="flex items-center gap-3 opacity-50"><div class="w-8 h-8 rounded-lg bg-violet-500/20 border border-violet-400/40 flex items-center justify-center">🧠</div><span class="text-sm text-white/70">Accurate tier</span></div>
+            </div>
+            <div class="mt-4 space-y-2">
+                <div><div class="flex justify-between text-[11px] mb-1"><span class="text-white/70">Anxiety</span><span class="text-white/45">78%</span></div><div class="w-full h-1.5 rounded-full bg-white/8"><div class="bar" style="width:78%;background:#38bdf8"></div></div></div>
+                <div><div class="flex justify-between text-[11px] mb-1"><span class="text-white/70">Depression</span><span class="text-white/45">15%</span></div><div class="w-full h-1.5 rounded-full bg-white/8"><div class="bar" style="width:15%;background:#818cf8"></div></div></div>
+                <div><div class="flex justify-between text-[11px] mb-1"><span class="text-white/70">Suicidal</span><span class="text-white/45">6%</span></div><div class="w-full h-1.5 rounded-full bg-white/8"><div class="bar" style="width:6%;background:#f87171"></div></div></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- TECH STACK -->
+<section id="stack" class="max-w-5xl mx-auto px-5 py-14 text-center">
+    <h2 class="text-3xl md:text-4xl font-black reveal">Built with</h2>
+    <div class="mt-8 flex flex-wrap justify-center gap-3 reveal">
+        <span class="glass px-4 py-2 rounded-xl text-sm text-white/80">Python</span>
+        <span class="glass px-4 py-2 rounded-xl text-sm text-white/80">Flask</span>
+        <span class="glass px-4 py-2 rounded-xl text-sm text-white/80">PyTorch</span>
+        <span class="glass px-4 py-2 rounded-xl text-sm text-white/80">Transformers · DistilBERT</span>
+        <span class="glass px-4 py-2 rounded-xl text-sm text-white/80">scikit-learn</span>
+        <span class="glass px-4 py-2 rounded-xl text-sm text-white/80">SQLite</span>
+        <span class="glass px-4 py-2 rounded-xl text-sm text-white/80">Docker</span>
+        <span class="glass px-4 py-2 rounded-xl text-sm text-white/80">Hugging Face Spaces</span>
+        <span class="glass px-4 py-2 rounded-xl text-sm text-white/80">Gemini (optional)</span>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="max-w-4xl mx-auto px-5 py-16">
+    <div class="glass rounded-3xl p-10 text-center reveal glow-blue">
+        <h2 class="text-3xl md:text-4xl font-black">Talk to Mindful</h2>
+        <p class="mt-3 text-white/60 max-w-xl mx-auto">Create a private account and watch the AI classify, route, and respond — with every decision explained.</p>
+        <a href="/login" class="inline-block mt-7 font-semibold bg-white text-slate-900 px-8 py-3.5 rounded-xl hover:bg-white/90 transition">Launch the demo →</a>
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="border-t border-white/10">
+    <div class="max-w-6xl mx-auto px-5 py-8 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-white/45">
+        <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-sm">🧠</div>
+            <span class="font-semibold text-white/70">Mindful</span>
+        </div>
+        <p class="text-center max-w-lg text-xs">
+            For educational & research purposes only. Not a substitute for professional care.
+            If you're in crisis, call your local emergency number or 988 (U.S.).
+        </p>
+    </div>
+</footer>
+
+<script>
+    // scroll reveal
+    const io = new IntersectionObserver((entries)=>{
+        entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target); } });
+    },{threshold:0.12});
+    document.querySelectorAll(".reveal").forEach((el,i)=>{ el.style.transitionDelay=(i%4*60)+"ms"; io.observe(el); });
+</script>
+</body>
+</html>
