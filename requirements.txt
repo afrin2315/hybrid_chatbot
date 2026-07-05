@@ -1,5 +1,8 @@
-# Serving dependencies (what the deployed app needs at runtime).
-# Training-only packages live in requirements-train.txt.
+# Serving dependencies (lean — what the deployed app needs at runtime).
+# The deployed cascade runs on the fast + safety tiers (calibrated SVC + crisis
+# detector) with LLM-generated replies; it degrades gracefully without the
+# DistilBERT accurate tier. To enable that tier, also install torch +
+# transformers (they're in requirements-train.txt) and provide the model.
 flask==3.0.3
 flask-cors==5.0.0
 gunicorn==23.0.0
@@ -7,7 +10,3 @@ numpy==1.26.4
 requests==2.32.3
 scikit-learn==1.3.2
 joblib==1.4.2
-# Accurate tier (DistilBERT), PyTorch backend. The app also runs without these:
-# the cascade degrades to the fast + safety tiers when the transformer is absent.
-torch==2.5.1
-transformers==4.36.0

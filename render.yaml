@@ -1,11 +1,17 @@
 services:
   - type: web
     name: hybrid-chatbot
-    env: python
+    runtime: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn wsgi:app
+    # Render sets $PORT; gunicorn must bind to it. One worker keeps memory low.
+    startCommand: gunicorn wsgi:app --bind 0.0.0.0:$PORT --workers 1 --timeout 120
     envVars:
       - key: FLASK_SECRET_KEY
         generateValue: true
       - key: SESSION_COOKIE_SECURE
         value: "1"
+      - key: SESSION_COOKIE_SAMESITE
+        value: "Lax"
+      # Set your LLM key in the Render dashboard (do NOT commit it):
+      - key: GEMINI_API_KEY
+        sync: false
