@@ -1,5 +1,10 @@
 # Hybrid Mental-Health Triage Chatbot
 
+**🌐 Live demo:** https://hybrid-chatbot-o0s2.onrender.com &nbsp;·&nbsp; **💻 Code:** https://github.com/afrin2315/hybrid_chatbot
+
+> ⏳ The live demo is on a free tier that sleeps after inactivity — the first
+> request may take ~40s to wake up, then it's fast.
+
 A safety-aware mental-health support chatbot built around a **confidence-gated
 model cascade with an always-on, recall-optimized crisis safety layer**. The
 architecture is not a stylistic choice — it is **chosen by measurement**, and the
