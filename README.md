@@ -1,14 +1,3 @@
----
-title: Hybrid Mental Health Chatbot
-emoji: 🧠
-colorFrom: blue
-colorTo: green
-sdk: docker
-app_port: 7860
-pinned: false
-short_description: Evidence-driven hybrid NLP triage chatbot for mental health.
----
-
 # Hybrid Mental-Health Triage Chatbot
 
 A safety-aware mental-health support chatbot built around a **confidence-gated
@@ -172,19 +161,34 @@ so the routing itself is inspectable.
 ## Project structure
 
 ```
-ml/
-  config.py       shared paths, class labels, thresholds
-  data.py         download, clean, stratified split
-  train_svc.py    calibrated TF-IDF + LinearSVC (fast tier)
-  crisis.py       high-recall crisis detector (safety layer)
-  train_bert.py   DistilBERT fine-tune, plain PyTorch loop (accurate tier)
-  cascade.py      inference core: safety override + confidence-gated routing
-  evaluate.py     two-table ablation + confusion matrix + latency
-  pipeline.py     one-command reproduction
-responder.py      response layer (Gemini or local templates)
-hybrid_app.py     Flask app: auth, persistent history, /chat, transparency
-tests/            pytest suite (routing, crisis override, auth, persistence)
-templates/        landing page + login + chat UI
+hybrid_app.py          Flask app: auth, persistent history, /chat, transparency API
+responder.py           response layer: LLM (NVIDIA/Gemini) or local templates
+wsgi.py                production entrypoint (gunicorn wsgi:app)
+
+ml/                    the machine-learning pipeline
+  config.py            shared paths, class labels, thresholds
+  data.py              download, clean, stratified train/val/test split
+  augment.py           short-form data augmentation (fixes short-chat bias)
+  train_svc.py         calibrated TF-IDF + LinearSVC        (fast tier)
+  crisis.py            high-recall crisis detector          (safety layer)
+  train_bert.py        DistilBERT fine-tune, PyTorch loop   (accurate tier)
+  bert_infer.py        lazy DistilBERT inference wrapper
+  cascade.py           inference core: safety override + confidence-gated routing
+  evaluate.py          two-table ablation + confusion matrix + latency
+  pipeline.py          one-command reproduction of the whole pipeline
+
+templates/             landing.html · login.html · index.html (chat UI)
+static/                app.css (built Tailwind) · input.css (source)
+tests/                 pytest suite (routing, crisis override, auth, persistence)
+
+artifacts/             trained models — svc_pipeline + crisis_detector committed;
+                       distilbert/ is regenerable (too large for git)
+data/                  label_map.json committed; parquet splits regenerated locally
+reports/               metrics.json, confusion_matrix.png (evaluation outputs)
+
+Dockerfile · render.yaml · requirements.txt · requirements-train.txt
+package.json · tailwind.config.js · runtime.txt · .env.example
+README.md · REPORT.md (paper-style write-up) · INTERVIEW.md (prep notes)
 ```
 
 ## Tech stack
@@ -194,8 +198,8 @@ templates/        landing page + login + chat UI
   PyTorch + Transformers (DistilBERT)
 - **Data/eval:** Hugging Face `datasets`, pandas, matplotlib
 - **DB:** SQLite (users + persistent chat history)
-- **Deploy:** Docker (CPU-only PyTorch), Hugging Face Spaces
-- **Optional:** Gemini for response generation
+- **Deploy:** Docker / gunicorn — runs on Render, Railway, Fly.io, or Cloud Run
+- **Optional LLM:** NVIDIA Nemotron or Google Gemini for response generation
 
 ## Environment variables
 
