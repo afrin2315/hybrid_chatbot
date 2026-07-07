@@ -27,3 +27,6 @@ artifacts/_bert_ckpt/
 cjb.txt
 hybrid-mental-health-chatbot/
 .hf_cache/
+
+# Personal interview prep — keep local, not public
+INTERVIEW.md
