@@ -2,6 +2,8 @@ services:
   - type: web
     name: hybrid-chatbot
     runtime: python
+    plan: free
+    healthCheckPath: /health
     buildCommand: pip install -r requirements.txt
     # Render sets $PORT; gunicorn must bind to it. One worker keeps memory low.
     startCommand: gunicorn wsgi:app --bind 0.0.0.0:$PORT --workers 1 --timeout 120
